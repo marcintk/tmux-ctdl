@@ -2,7 +2,7 @@
 # The outer status bar's render lib. Every function here is a verb over
 # explicit arguments — session, window, blink frame, clock — never a script
 # global, so a test calls straight into render_agent/agentbar_render without
-# reconstructing an entry point's environment. ctdl.sh's `agentbar` verb is
+# reconstructing an entry point's environment. tmux-ctdl.sh's `agentbar` verb is
 # the only caller and does nothing but parse args and call agentbar_render.
 
 . "${WORKSPACE_HOME:-$HOME/.config/tmux/workspace}/workspace-boot.sh"
@@ -212,7 +212,7 @@ render_agent() {
 }
 
 # agentbar_render <agent> <tsess> <win> <now> — the whole bar segment for one
-# window. The single verb ctdl.sh's `agentbar` verb calls: derives the blink
+# window. The single verb tmux-ctdl.sh's `agentbar` verb calls: derives the blink
 # frame from <now> so nothing downstream needs the wall clock as a global.
 agentbar_render() {
   local agent=$1 tsess=$2 win=$3 now=$4 blink

@@ -9,7 +9,7 @@ tmux dev layout (`ctdl`) + agent status bar/badges for Claude Code and
 Copilot. Everything boots through `workspace-boot.sh`, which reads
 `workspace.conf` then sources requested libs by name (`tmux`, `state`,
 `layout`, `adapter`, `wintab`, `agentbar`) — no caller hardcodes a path
-except `ctdl.sh` itself. A lib needing another lib calls `workspace_boot`
+except `tmux-ctdl.sh` itself. A lib needing another lib calls `workspace_boot`
 itself (idempotent, so re-requesting an already-loaded lib is free).
 
 ## Install
@@ -23,7 +23,7 @@ cd ~/Development/tmux-ctdl
 Deploys this repo to `$WORKSPACE_HOME` (default `~/.config/tmux/workspace`)
 and appends integration snippets — marked, idempotent, safe to re-run — to:
 
-- `~/.config/zsh/.zshrc` — sources `ctdl.sh`, defines `dev` alias
+- `~/.config/zsh/.zshrc` — sources `tmux-ctdl.sh`, defines `dev` alias
 - `~/.config/tmux/tmux.conf` — 2 keybinds, 2 status-format lines (tmux also
   needs `set -g status 2` and `status-interval 1` set somewhere — not
   appended, likely already in your tmux.conf)
@@ -38,15 +38,15 @@ installer does this for you if missing).
 
 ## Entry point
 
-**`ctdl.sh`** is the only file any external system calls — tmux keybinds,
+**`tmux-ctdl.sh`** is the only file any external system calls — tmux keybinds,
 tmux status-formats, Claude Code hooks.
 
-**Sourced** (shell rc): `source ~/.config/tmux/workspace/ctdl.sh` defines
+**Sourced** (shell rc): `source ~/.config/tmux/workspace/tmux-ctdl.sh` defines
 `ctdl` (build 3-pane layout: agent / change-tracker / terminal) and `ctdlm`
 ("multi" — one `ctdl` window per git workspace under the current dir, or
 `~/Development`; works outside tmux too, re-invokes itself inside a new session).
 
-**Executed** (`ctdl.sh <verb> [args]`):
+**Executed** (`tmux-ctdl.sh <verb> [args]`):
 
 | Verb | Calls | Used by |
 |---|---|---|
@@ -66,7 +66,7 @@ one active agent's hooks assumed wired at a time.
 
 ```
 workspace/
-  ctdl.sh             external entry point: sourceable (ctdl, ctdlm) + executable (verbs)
+  tmux-ctdl.sh             external entry point: sourceable (ctdl, ctdlm) + executable (verbs)
   workspace-boot.sh   the one way into the runtime; loads conf + libs
   workspace.conf      active agent, editor/tracker commands, timing — overrides only,
                       every colour/threshold defaults at the module that reads it
@@ -82,14 +82,14 @@ workspace/
 
 Naming: **area** = module dir (`layout · state · tmux · adapter · wintab ·
 agentbar`); **role** = `-lib` (sourceable verbs, no load-time side effects) or
-a verb name under `ctdl.sh`. No mechanism words (`hook`/`poll`/`cleanup`) in
+a verb name under `tmux-ctdl.sh`. No mechanism words (`hook`/`poll`/`cleanup`) in
 filenames — those describe the caller, not the code.
 
 ## Module wiring
 
 ```mermaid
 graph TD
-  ctdl["ctdl.sh (routing only)"]
+  ctdl["tmux-ctdl.sh (routing only)"]
   ctdl --> layout["layout-lib"]
   ctdl --> wintab["wintab-lib"]
   ctdl --> agentbar["agentbar-lib"]

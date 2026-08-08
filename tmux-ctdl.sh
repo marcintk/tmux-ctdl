@@ -4,24 +4,24 @@
 # never a subdirectory path directly.
 #
 # Sourced from a shell rc:
-#   source ~/.config/tmux/workspace/ctdl.sh
+#   source ~/.config/tmux/workspace/tmux-ctdl.sh
 # defines two functions:
 #   ctdl   — build the 3-pane layout (agent / change-tracker / terminal)
 #   ctdlm  — one ctdl window per git workspace under the current dir
 #
 # Executed directly, by tmux.conf / claude/.claude/settings.json — dispatch on
 # a verb:
-#   ctdl.sh tracker-editor-toggle <pane_id>  tmux Space      — tracker <-> editor
-#   ctdl.sh agent-respawn <pane_id>          tmux prefix-C   — restart agent pane
-#   ctdl.sh wintab-tick <session>            status-format[0]— poll wintab badges
-#   ctdl.sh agentbar <sess> <win>        status-format[1]   — render outer bar
-#   ctdl.sh wintab-badge <RUNNING|CLEAR|DONE|PERMISSION>
+#   tmux-ctdl.sh tracker-editor-toggle <pane_id>  tmux Space      — tracker <-> editor
+#   tmux-ctdl.sh agent-respawn <pane_id>          tmux prefix-C   — restart agent pane
+#   tmux-ctdl.sh wintab-tick <session>            status-format[0]— poll wintab badges
+#   tmux-ctdl.sh agentbar <sess> <win>        status-format[1]   — render outer bar
+#   tmux-ctdl.sh wintab-badge <RUNNING|CLEAR|DONE|PERMISSION>
 #                                        Claude Code hooks  — set window badge
-#   ctdl.sh agent-push-usage             Claude statusLine  — write usage state
+#   tmux-ctdl.sh agent-push-usage             Claude statusLine  — write usage state
 #                                        (agent pushes a JSON payload on stdin)
-#   ctdl.sh agent-footer                 Claude Stop hook   — end-of-turn usage
+#   tmux-ctdl.sh agent-footer                 Claude Stop hook   — end-of-turn usage
 #                                        line (stdin JSON, answers on stdout)
-#   ctdl.sh agent-pull-usage             wintab-tick        — write usage state
+#   tmux-ctdl.sh agent-pull-usage             wintab-tick        — write usage state
 #                                        (agent has no hook; adapter-lib polls
 #                                        <agent>_collect, rate-limited by
 #                                        USAGE_REFRESH)

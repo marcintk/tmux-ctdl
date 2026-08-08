@@ -16,7 +16,7 @@ AGENT_CMD="copilot"
 # No <agent>_refresh_costs hook: Copilot bills in AI credits, not per-block $
 # like ccusage.
 
-# Copilot has no hooks, so it has no push — ctdl.sh agent-pull-usage drives it
+# Copilot has no hooks, so it has no push — tmux-ctdl.sh agent-pull-usage drives it
 # via <agent>_collect instead of a statusLine.
 COPILOT_DB="${COPILOT_DB:-$HOME/.copilot/session-store.db}"
 

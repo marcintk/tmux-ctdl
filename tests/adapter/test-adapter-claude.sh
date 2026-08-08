@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # adapter-claude.sh — Claude agent module. Covers claude_usage_rows (directly,
-# and end-to-end through ctdl.sh agentbar), claude_refresh_costs (with the two cost
+# and end-to-end through tmux-ctdl.sh agentbar), claude_refresh_costs (with the two cost
 # commands stubbed) and claude_live_cwds (session probe).
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../helpers.sh"
@@ -19,7 +19,7 @@ test_display_renders_session_weekly() {
     > "$tmp/agent-shared-claude-test-session-@1"
   local out
   out=$(WORKSPACE_CONF="$th/workspace.conf" AGENT_TMP_DIR="$tmp" \
-         bash "$WORKSPACE_HOME/ctdl.sh" agentbar test-session @1)
+         bash "$WORKSPACE_HOME/tmux-ctdl.sh" agentbar test-session @1)
   rm -rf "$th" "$tmp"
   assert_contains "$out" "Claude: Sonnet" &&
   assert_contains "$out" "Session: 45.5%" &&
@@ -158,7 +158,7 @@ test_incoming_stale_rejects_small_drop_same_block() {
 # relative to what's stored) is still correctly rejected as out-of-order.
 # claude_parse_shared/claude_parse_context called directly in-process (the
 # push-usage suite drives them too, but only through many rapid `bash
-# ctdl.sh` subprocesses — belt and suspenders against losing a real path to
+# tmux-ctdl.sh` subprocesses — belt and suspenders against losing a real path to
 # that indirection).
 test_parse_shared_direct() {
   . "$ADAPTER/adapter-claude.sh"

@@ -171,12 +171,12 @@ test_footer_transcript_without_assistant_passes_through() {
 
 # ── Wiring ──────────────────────────────────────────────────────────────────
 
-# The verb Claude Code's Stop hook actually calls, end to end through ctdl.sh.
+# The verb Claude Code's Stop hook actually calls, end to end through tmux-ctdl.sh.
 test_ctdl_agent_footer_verb() {
   local t; t=$(_transcript claude-opus-5 2 141 120860 0)
   local out
   out=$(printf '{"transcript_path":"%s","stop_hook_active":false}' "$t" \
-        | CLAUDE_SETTINGS="$WORK/settings.json" bash "$SCRIPTS/ctdl.sh" agent-footer)
+        | CLAUDE_SETTINGS="$WORK/settings.json" bash "$SCRIPTS/tmux-ctdl.sh" agent-footer)
   assert_contains "$(jq -r '.systemMessage' <<< "$out")" "Σ121k" "verb produced the line"
 }
 

@@ -29,28 +29,28 @@ ctx_out() {
 test_silent_without_shared_file() {
   setup
   local out
-  out=$(bash "$SCRIPTS/ctdl.sh" agentbar test-session @1)
+  out=$(bash "$SCRIPTS/tmux-ctdl.sh" agentbar test-session @1)
   assert_empty "$out"
 }
 
 test_shows_session_pct() {
   setup; seed_shared 45.5
   local out
-  out=$(bash "$SCRIPTS/ctdl.sh" agentbar test-session @1)
+  out=$(bash "$SCRIPTS/tmux-ctdl.sh" agentbar test-session @1)
   assert_contains "$out" "Session: 45.5%"
 }
 
 test_shows_weekly_pct() {
   setup; seed_shared 30 22.7
   local out
-  out=$(bash "$SCRIPTS/ctdl.sh" agentbar test-session @1)
+  out=$(bash "$SCRIPTS/tmux-ctdl.sh" agentbar test-session @1)
   assert_contains "$out" "Weekly: 22.7%"
 }
 
 test_shows_agent_label() {
   setup; seed_shared
   local out
-  out=$(bash "$SCRIPTS/ctdl.sh" agentbar test-session @1)
+  out=$(bash "$SCRIPTS/tmux-ctdl.sh" agentbar test-session @1)
   assert_contains "$out" "Claude:"
 }
 
@@ -61,14 +61,14 @@ test_shows_agent_label() {
 test_render_carries_style_codes() {
   setup; seed_shared
   local out
-  out=$(bash "$SCRIPTS/ctdl.sh" agentbar test-session @1)
+  out=$(bash "$SCRIPTS/tmux-ctdl.sh" agentbar test-session @1)
   assert_contains "$out" '#[' "style codes reach tmux unmangled"
 }
 
 test_reset_times_unknown_sentinel() {
   setup; seed_shared
   local out
-  out=$(bash "$SCRIPTS/ctdl.sh" agentbar test-session @1)
+  out=$(bash "$SCRIPTS/tmux-ctdl.sh" agentbar test-session @1)
   assert_contains "$out" '⟳?:??'
   assert_contains "$out" '?@?:??'
 }
@@ -78,7 +78,7 @@ test_weekly_cost_unknown_shows_nothing() {
   # non-numeric content → show nothing, not $?.??
   echo ";unknown" > ${AGENT_TMP_DIR}/agent-cost-weekly-claude
   local out
-  out=$(bash "$SCRIPTS/ctdl.sh" agentbar test-session @1)
+  out=$(bash "$SCRIPTS/tmux-ctdl.sh" agentbar test-session @1)
   rm -f ${AGENT_TMP_DIR}/agent-cost-weekly-claude
   ! printf '%s' "$out" | grep -qF '$?'
 }
@@ -87,7 +87,7 @@ test_weekly_cost_numeric_shows_value() {
   setup; seed_shared
   echo "3.14" > ${AGENT_TMP_DIR}/agent-cost-weekly-claude
   local out
-  out=$(bash "$SCRIPTS/ctdl.sh" agentbar test-session @1)
+  out=$(bash "$SCRIPTS/tmux-ctdl.sh" agentbar test-session @1)
   rm -f ${AGENT_TMP_DIR}/agent-cost-weekly-claude
   assert_contains "$out" '$3.14'
 }
@@ -99,7 +99,7 @@ test_context_model_overrides_shared() {
   printf 'model\tOpus\neffort\tultrahigh\nctx\t10\n' \
     > "${AGENT_TMP_DIR}/agent-ctx-claude-test-session-@1"
   local out
-  out=$(bash "$SCRIPTS/ctdl.sh" agentbar test-session @1)
+  out=$(bash "$SCRIPTS/tmux-ctdl.sh" agentbar test-session @1)
   rm -f "${AGENT_TMP_DIR}/agent-ctx-claude-test-session-@1"
   assert_contains "$out" "Opus"
 }

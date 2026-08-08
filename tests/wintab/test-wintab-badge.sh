@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ctdl.sh wintab-badge — the event entry point, end to end through the state machine,
+# tmux-ctdl.sh wintab-badge — the event entry point, end to end through the state machine,
 # state-lib and the fixtures/tmux adapter.
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../helpers.sh"
@@ -28,7 +28,7 @@ setup() {
   export MOCK_SESSION=test-session MOCK_WIN=@1
 }
 
-_hook() { echo '' | bash "$SCRIPTS/ctdl.sh" wintab-badge "$@"; }
+_hook() { echo '' | bash "$SCRIPTS/tmux-ctdl.sh" wintab-badge "$@"; }
 _calls() { cat /tmp/mock-tmux-calls; }
 _phase() { cat "$AGENT_TMP_DIR/agent-phase-claude-test-session-@1" 2>/dev/null; }
 

@@ -26,8 +26,8 @@
 #       Pull-based agents only: gather and print the raw payload
 #       parse_shared/parse_context read (a sqlite query, a process probe, ...).
 #       Push-based agents (Claude) omit it — their payload already arrives on
-#       stdin via ctdl.sh agent-push-usage. Pull-based agents (Copilot) are
-#       driven by ctdl.sh agent-pull-usage, called off the wintab-tick, rate-
+#       stdin via tmux-ctdl.sh agent-push-usage. Pull-based agents (Copilot) are
+#       driven by tmux-ctdl.sh agent-pull-usage, called off the wintab-tick, rate-
 #       limited by USAGE_REFRESH so a per-second tick doesn't hammer the store.
 #   <agent>_incoming_stale <agent> <incoming-shared-value>
 #       Return 0 (true) to SKIP the write because incoming data is older than
@@ -43,7 +43,7 @@
 #       shape is the agent's, not this lib's. Agents with no end-of-turn hook
 #       omit it.
 #
-# Display-side contract (read by agentbar-lib.sh via ctdl.sh agentbar, not by
+# Display-side contract (read by agentbar-lib.sh via tmux-ctdl.sh agentbar, not by
 # this lib):
 #   <agent>_usage_rows <agent> <now>
 #       Prints the agent's usage rows, one per line:
@@ -215,11 +215,11 @@ until_at() {
 # usage_refresh_secs — USAGE_REFRESH ("30s", "1m", "2h") as seconds. One knob
 # for "how stale is OK before paying for an expensive re-fetch" — Claude's
 # claude_refresh_costs (ccusage) and a pull-based agent's whole collect
-# (ctdl.sh agent-pull-usage) both rate-limit against it.
+# (tmux-ctdl.sh agent-pull-usage) both rate-limit against it.
 usage_refresh_secs() { interval_secs "${USAGE_REFRESH:-1m}"; }
 
 # ── Usage verbs ──────────────────────────────────────────────────────────────
-# The two ways a usage payload gets in, named after the ctdl.sh verbs that call
+# The two ways a usage payload gets in, named after the tmux-ctdl.sh verbs that call
 # them (agent-push-usage → adapter_push_usage, agent-pull-usage →
 # adapter_pull_usage) so the routing table reads straight across. How a payload
 # is acquired, and how often, is this module's business, not the router's.

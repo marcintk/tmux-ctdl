@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# The wintab badge state machine. ONE machine, two entry verbs: ctdl.sh wintab-badge
-# feeds it agent events, ctdl.sh wintab-tick feeds it liveness on the status tick.
+# The wintab badge state machine. ONE machine, two entry verbs: tmux-ctdl.sh wintab-badge
+# feeds it agent events, tmux-ctdl.sh wintab-tick feeds it liveness on the status tick.
 # Both go through wintab_apply, so neither decides the badge behind the other's
 # back — the phase is stored state, not "whatever is currently in the tmux option".
 #
@@ -174,7 +174,7 @@ wintab_on_tick() {
 }
 
 # ── Entry verbs ──────────────────────────────────────────────────────────────
-# The two things ctdl.sh calls into this module for: badge (event, from a
+# The two things tmux-ctdl.sh calls into this module for: badge (event, from a
 # Claude Code hook) and tick (poll, once per status-interval). Both route
 # through wintab_apply above, so neither clobbers the other's state.
 

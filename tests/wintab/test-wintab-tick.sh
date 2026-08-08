@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ctdl.sh wintab-tick — the poll entry point, end to end. Phase is seeded through
+# tmux-ctdl.sh wintab-tick — the poll entry point, end to end. Phase is seeded through
 # state-lib rather than by touching files, and badges are read back from the
 # fixtures/tmux call log.
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
@@ -43,13 +43,13 @@ setup() {
 }
 
 _seed()  { state_put "$1" phase claude test-session @1; }
-_tick()  { bash "$SCRIPTS/ctdl.sh" wintab-tick test-session; }
+_tick()  { bash "$SCRIPTS/tmux-ctdl.sh" wintab-tick test-session; }
 _calls() { cat /tmp/mock-tmux-calls; }
 _phase() { state_get phase claude test-session @1; }
 
 test_no_session_exits_silently() {
   setup
-  assert_empty "$(bash "$SCRIPTS/ctdl.sh" wintab-tick 2>&1)" "no output without session arg"
+  assert_empty "$(bash "$SCRIPTS/tmux-ctdl.sh" wintab-tick 2>&1)" "no output without session arg"
 }
 
 test_live_process_sets_pulse() {

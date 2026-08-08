@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # adapter-copilot.sh — consumer-side module. Covers copilot_format_usage (via the
-# ctdl.sh agentbar end-to-end render) and copilot_live_cwds (process probe).
+# tmux-ctdl.sh agentbar end-to-end render) and copilot_live_cwds (process probe).
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../helpers.sh"
 ADAPTER="$DIR/../../adapter"
@@ -19,7 +19,7 @@ test_display_renders_copilot_model_only() {
   printf 'model\tGPT-5\neffort\thigh\n' > "$tmp/agent-shared-copilot-test-session-@1"
   local out
   out=$(WORKSPACE_CONF="$th/workspace.conf" AGENT_TMP_DIR="$tmp" \
-         bash "$WORKSPACE_HOME/ctdl.sh" agentbar test-session @1)
+         bash "$WORKSPACE_HOME/tmux-ctdl.sh" agentbar test-session @1)
   rm -rf "$th" "$tmp"
   assert_contains "$out" "Copilot: GPT-5" "copilot model line rendered" &&
   ! printf '%s' "$out" | grep -qF "Today:"  # no usage segment without data
@@ -33,7 +33,7 @@ test_display_renders_copilot_usage() {
   printf 'today\t12.5\nweek\t40\nmonth\t63.2\nmodel\tGPT-5\neffort\thigh\n' > "$tmp/agent-shared-copilot-test-session-@1"
   local out
   out=$(WORKSPACE_CONF="$th/workspace.conf" AGENT_TMP_DIR="$tmp" \
-         bash "$WORKSPACE_HOME/ctdl.sh" agentbar test-session @1)
+         bash "$WORKSPACE_HOME/tmux-ctdl.sh" agentbar test-session @1)
   rm -rf "$th" "$tmp"
   assert_contains "$out" "Today: 12.5%"  &&
   assert_contains "$out" "Week: 40.0%"   &&

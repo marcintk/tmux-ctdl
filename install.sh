@@ -45,7 +45,7 @@ append_marked() {
 merge_claude_settings() {
   [[ -f "$CLAUDE_SETTINGS" ]] || { log "skip $CLAUDE_SETTINGS (not found)"; return 0; }
   command -v jq >/dev/null || { log "jq not found, skipping $CLAUDE_SETTINGS merge — see integrations/claude-settings.json"; return 0; }
-  if jq -e '.statusLine.command? // "" | contains("ctdl.sh")' "$CLAUDE_SETTINGS" >/dev/null 2>&1; then
+  if jq -e '.statusLine.command? // "" | contains("tmux-ctdl.sh")' "$CLAUDE_SETTINGS" >/dev/null 2>&1; then
     log "$CLAUDE_SETTINGS already wired, skipping"
     return 0
   fi

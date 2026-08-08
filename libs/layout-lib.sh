@@ -6,7 +6,7 @@
 # else — callers use the verbs below, never the option names directly.
 # Every tmux call goes through tmux-lib.sh.
 #
-# Config-agnostic: callers (ctdl.sh's toggle/respawn verbs, tmux.conf's bind C)
+# Config-agnostic: callers (tmux-ctdl.sh's toggle/respawn verbs, tmux.conf's bind C)
 # source workspace.conf + the agent module themselves and pass the resulting
 # commands in as arguments.
 
