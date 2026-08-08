@@ -20,8 +20,8 @@ deploy_workspace() {
   rsync -a --delete --exclude='.git' --exclude='.coverage' \
     --exclude='tmux-ctdl.conf' "$REPO_DIR"/ "$TARGET"/
   if [[ ! -f "$TARGET/tmux-ctdl.conf" ]]; then
-    cp "$REPO_DIR/tmux-ctdl.conf.example" "$TARGET/tmux-ctdl.conf"
-    log "wrote $TARGET/tmux-ctdl.conf from example — edit CODING_AGENT if needed"
+    cp "$REPO_DIR/tmux-ctdl.conf" "$TARGET/tmux-ctdl.conf"
+    log "wrote $TARGET/tmux-ctdl.conf — edit CODING_AGENT if needed"
   fi
   log "deployed to $TARGET"
 }

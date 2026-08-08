@@ -32,9 +32,9 @@ and appends integration snippets — marked, idempotent, safe to re-run — to:
 
 Raw snippets live in [`integrations/`](integrations/) if you'd rather apply
 by hand. Per-agent wiring detail: [`docs/agents/claude.md`](docs/agents/claude.md),
-[`docs/agents/copilot.md`](docs/agents/copilot.md). Copy
-`tmux-ctdl.conf.example` → `tmux-ctdl.conf` to pick `CODING_AGENT` (the
-installer does this for you if missing).
+[`docs/agents/copilot.md`](docs/agents/copilot.md). Edit `tmux-ctdl.conf` to
+pick `CODING_AGENT` — the installer deploys it as-is on first install and
+leaves your copy at `$TARGET/tmux-ctdl.conf` alone on every reinstall after.
 
 ## Entry point
 
