@@ -229,7 +229,7 @@ test_cost_session_parses_npm_ccusage() {
 test_cost_lifetime_parses_npm_ccusage() {
   . "$ADAPTER/adapter-claude.sh"
   local out
-  out=$(PATH="$DIR/../fixtures:$PATH" MOCK_CCUSAGE_JSON='{"daily":[{"date":"2025-05-03","totalCost":1.5,"totalTokens":1000},{"date":"2025-06-01","totalCost":0.5,"totalTokens":500}]}' claude_cost_lifetime)
+  out=$(PATH="$DIR/../fixtures:$PATH" MOCK_CCUSAGE_JSON='{"daily":[{"period":"2025-05-03","totalCost":1.5,"totalTokens":1000},{"period":"2025-06-01","totalCost":0.5,"totalTokens":500}]}' claude_cost_lifetime)
   assert_contains "$out" "$(printf '2\t1500\t2025-05-03')" "sums every day and keeps the earliest date"
 }
 
