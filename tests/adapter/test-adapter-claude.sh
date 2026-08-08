@@ -94,8 +94,47 @@ test_usage_rows_show_distinct_tokens_per_row() {
   printf '357025\n'  > "$tmp/agent-tokens-weekly-claude"
   local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
   rm -rf "$tmp"
-  assert_contains "$out" "$(printf 'Session\t45.5\t⟳?:??\t-\tΣ6488k')" "session shows its own total" &&
+  assert_contains "$out" "$(printf 'Session\t45.5\t⟳?:??\t-\tΣ6M')" "session shows its own total" &&
   assert_contains "$out" "$(printf 'Weekly\t22.7\t⟳?@?:??\t-\tΣ357k')" "weekly shows its own, different total"
+}
+
+# Lifetime is a fourth, pct-less row: label carries the anchor date, no "N%".
+test_usage_rows_includes_lifetime_row() {
+  . "$ADAPTER/adapter-claude.sh"
+  local tmp; tmp=$(mktemp -d)
+  printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\n' \
+    > "$tmp/agent-shared-claude-test-session-@1"
+  printf '300.00\n'    > "$tmp/agent-cost-lifetime-claude"
+  printf '8200000000\n' > "$tmp/agent-tokens-lifetime-claude"
+  printf '2025-05-01\n' > "$tmp/agent-since-lifetime-claude"
+  local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+  rm -rf "$tmp"
+  assert_contains "$out" "$(printf "Since May'25\t-\t-\t300.00\tΣ8B")" "lifetime row carries the anchor date, total cost and tokens" &&
+  # Round-trip through the actual reader (agentbar-lib's paint_usage), not
+  # just the raw tab string: a "-" sentinel that read() still collapses
+  # would pass the line above and fail here.
+  ( STUB_ROWS=$out
+    . "$DIR/../../agentbar/agentbar-lib.sh"
+    stub_usage_rows() { printf '%s\n' "$STUB_ROWS"; }
+    rendered=$(paint_usage stub 0 0)
+    printf '%s' "$rendered" | grep -q '\$300.00' &&
+    printf '%s' "$rendered" | grep -q 'Σ8B' &&
+    ! printf '%s' "$rendered" | grep -qE "May'25:.*%"
+  )
+}
+
+# No lifetime cache yet → no fourth row (rows function stays 2-row shaped),
+# and claude_usage_rows itself must still report success (return 0).
+test_usage_rows_omits_lifetime_row_without_cache() {
+  . "$ADAPTER/adapter-claude.sh"
+  local tmp; tmp=$(mktemp -d)
+  printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\n' \
+    > "$tmp/agent-shared-claude-test-session-@1"
+  local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+  local rc=$?
+  rm -rf "$tmp"
+  [ "$rc" -eq 0 ] &&
+  ! printf '%s' "$out" | grep -q "Since\|Lifetime"
 }
 
 # No cached tokens yet → tokens field is empty, no crash, no "Σ0".
@@ -187,6 +226,13 @@ test_cost_session_parses_npm_ccusage() {
   assert_contains "$out" "$(printf '0.25\t200')" "reads the last block's cost and tokens"
 }
 
+test_cost_lifetime_parses_npm_ccusage() {
+  . "$ADAPTER/adapter-claude.sh"
+  local out
+  out=$(PATH="$DIR/../fixtures:$PATH" MOCK_CCUSAGE_JSON='{"daily":[{"date":"2025-05-03","totalCost":1.5,"totalTokens":1000},{"date":"2025-06-01","totalCost":0.5,"totalTokens":500}]}' claude_cost_lifetime)
+  assert_contains "$out" "$(printf '2\t1500\t2025-05-03')" "sums every day and keeps the earliest date"
+}
+
 test_incoming_stale_rejects_older_block() {
   . "$ADAPTER/adapter-claude.sh"
   local tmp; tmp=$(mktemp -d)
@@ -205,20 +251,44 @@ test_incoming_stale_rejects_older_block() {
 test_refresh_costs_caches_both_slots() {
   . "$ADAPTER/adapter-claude.sh"
   local tmp; tmp=$(mktemp -d)
-  claude_cost_weekly()  { printf '4.20\t357025\n'; }
-  claude_cost_session() { printf '0.70\t6488061\n'; }
+  claude_cost_weekly()   { printf '4.20\t357025\n'; }
+  claude_cost_session()  { printf '0.70\t6488061\n'; }
+  claude_cost_lifetime() { printf '300.00\t8200000000\t2025-05-01\n'; }
   AGENT_TMP_DIR="$tmp" USAGE_REFRESH=0 claude_refresh_costs claude
   wait
-  local weekly session weekly_tok session_tok
-  read -r weekly      < "$tmp/agent-cost-weekly-claude"
-  read -r session     < "$tmp/agent-cost-session-claude"
-  read -r weekly_tok  < "$tmp/agent-tokens-weekly-claude"
-  read -r session_tok < "$tmp/agent-tokens-session-claude"
+  local weekly session weekly_tok session_tok lifetime lifetime_tok lifetime_since
+  read -r weekly         < "$tmp/agent-cost-weekly-claude"
+  read -r session        < "$tmp/agent-cost-session-claude"
+  read -r weekly_tok     < "$tmp/agent-tokens-weekly-claude"
+  read -r session_tok    < "$tmp/agent-tokens-session-claude"
+  read -r lifetime       < "$tmp/agent-cost-lifetime-claude"
+  read -r lifetime_tok   < "$tmp/agent-tokens-lifetime-claude"
+  read -r lifetime_since < "$tmp/agent-since-lifetime-claude"
   rm -rf "$tmp"
   assert_contains "$weekly" "4.20" "weekly cost cached" &&
   assert_contains "$session" "0.70" "session cost cached" &&
   assert_contains "$weekly_tok" "357025" "weekly tokens cached" &&
-  assert_contains "$session_tok" "6488061" "session tokens cached"
+  assert_contains "$session_tok" "6488061" "session tokens cached" &&
+  assert_contains "$lifetime" "300.00" "lifetime cost cached" &&
+  assert_contains "$lifetime_tok" "8200000000" "lifetime tokens cached" &&
+  assert_contains "$lifetime_since" "2025-05-01" "lifetime anchor date cached"
+}
+
+# weekly/session's cost<TAB>tokens (no third field) must not write a spurious
+# "since" file — only lifetime's 3-field output does.
+test_refresh_costs_skips_since_for_two_field_slots() {
+  . "$ADAPTER/adapter-claude.sh"
+  local tmp; tmp=$(mktemp -d)
+  claude_cost_weekly()   { printf '4.20\t357025\n'; }
+  claude_cost_session()  { printf '0.70\t6488061\n'; }
+  claude_cost_lifetime() { printf '300.00\t8200000000\t2025-05-01\n'; }
+  AGENT_TMP_DIR="$tmp" USAGE_REFRESH=0 claude_refresh_costs claude
+  wait
+  local has_weekly_since=0 has_session_since=0
+  [ -f "$tmp/agent-since-weekly-claude" ]  && has_weekly_since=1
+  [ -f "$tmp/agent-since-session-claude" ] && has_session_since=1
+  rm -rf "$tmp"
+  [ "$has_weekly_since" -eq 0 ] && [ "$has_session_since" -eq 0 ]
 }
 
 # A cache fresher than USAGE_REFRESH is left alone — no command runs.
@@ -249,12 +319,16 @@ run_tests \
   test_parse_context_direct \
   test_cost_weekly_parses_npm_ccusage \
   test_cost_session_parses_npm_ccusage \
+  test_cost_lifetime_parses_npm_ccusage \
   test_usage_rows_are_plain_data \
   test_usage_rows_render_block_countdown \
   test_usage_rows_show_distinct_tokens_per_row \
   test_usage_rows_tokens_empty_without_cache \
+  test_usage_rows_includes_lifetime_row \
+  test_usage_rows_omits_lifetime_row_without_cache \
   test_usage_rows_absent_returns_1 \
   test_refresh_costs_caches_both_slots \
+  test_refresh_costs_skips_since_for_two_field_slots \
   test_refresh_costs_skips_fresh_cache \
   test_parse_session_extracts_pid_cwd \
   test_live_cwds_prints_live_session_cwd \

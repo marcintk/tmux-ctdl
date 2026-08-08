@@ -116,9 +116,17 @@ paint_usage() {
 
   while IFS=$'\t' read -r label pct suffix cost tokens; do
     [ -n "$label" ] || continue
-    printf -v pfmt '%.1f' "${pct:-0}"
+    # "-" is the same "field has nothing" sentinel cost uses below: a truly
+    # empty field collapses into its neighbour under read's IFS-whitespace
+    # splitting on a tab stream, so a row with no pct (e.g. the lifetime
+    # total) sends "-" instead of "".
     local rung="${pct%%.*}"
-    seg="$(paint PILL "${rung:-0}" "$blink") ${label}: ${pfmt}% #[default]"
+    if [ -n "$pct" ] && [ "$pct" != "-" ]; then
+      printf -v pfmt '%.1f' "$pct"
+      seg="$(paint PILL "${rung:-0}" "$blink") ${label}: ${pfmt}% #[default]"
+    else
+      seg="$(paint PILL 0 "$blink") ${label} #[default]"
+    fi
     # Tokens sit before cost: the count is what the dollars are derived from.
     [ -n "$tokens" ] && seg+=" #[fg=brightblack]${tokens}#[default]"
     # A cost cache can hold junk (a failed ccusage run) — show nothing, not $0.00.
@@ -127,7 +135,7 @@ paint_usage() {
       printf -v cfmt '%.2f' "$cost"
       seg+=" #[fg=brightblack]\$${cfmt}#[default]"
     fi
-    [ -n "$suffix" ] && seg+=" #[fg=brightblack]${suffix}#[default]"
+    [ -n "$suffix" ] && [ "$suffix" != "-" ] && seg+=" #[fg=brightblack]${suffix}#[default]"
     out="${out:+${out}${SEP}}${seg}"
   done <<< "$rows"
 
@@ -149,6 +157,17 @@ model_style() {
   printf '#[bg=%s,fg=%s]' "$bg" "$fg"
 }
 
+# _ctx_kfmt <value> <varname> — like kfmt, but floors at "k" (never bare
+# digits) so a fresh 0/0 gauge still renders "0k/100k" and the segment's
+# shape never shifts once real numbers land.
+_ctx_kfmt() {
+  local v=${1:-0}
+  if   (( v >= 1000000000 )); then printf -v "$2" '%dB' "$(( v / 1000000000 ))"
+  elif (( v >= 1000000 ));    then printf -v "$2" '%dM' "$(( v / 1000000 ))"
+  else                             printf -v "$2" '%dk' "$(( v / 1000 ))"
+  fi
+}
+
 # render_ctx <arrayname> <blink> [show_label] [label] — the context segment for
 # one window, from an already-filled context array (get_agent_context's
 # output). Pure: no state read, no tmux — the caller owns fetching, this owns
@@ -168,7 +187,10 @@ render_ctx() {
   case "$CTX_USED" in ''|*[!0-9]*) ;; *) _used=$CTX_USED ;; esac
   case "$CTX_MAX"  in ''|*[!0-9]*) ;; *) _max=$CTX_MAX ;; esac
   [ "$_max" -gt 0 ] || _max=${CTX_MAX_DEFAULT:-100000}
-  CTX_TOKENS=" #[fg=brightblack]$(( _used / 1000 ))k/$(( _max / 1000 ))k#[default]"
+  local _used_fmt _max_fmt
+  _ctx_kfmt "$_used" _used_fmt
+  _ctx_kfmt "$_max"  _max_fmt
+  CTX_TOKENS=" #[fg=brightblack]${_used_fmt}/${_max_fmt}#[default]"
   FILLED=$(( PCT * 20 / 100 ))
   BAR=$(awk -v n="$FILLED" 'BEGIN{for(i=1;i<=n;i++) printf "▓"; for(i=n+1;i<=20;i++) printf "░"}')
 
