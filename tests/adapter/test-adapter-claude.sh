@@ -109,7 +109,7 @@ test_usage_rows_includes_lifetime_row() {
   printf '2025-05-01\n' > "$tmp/agent-since-lifetime-claude"
   local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
   rm -rf "$tmp"
-  assert_contains "$out" "$(printf "Since May'25\t-\t-\t300.00\tΣ8B")" "lifetime row carries the anchor date, total cost and tokens" &&
+  assert_contains "$out" "$(printf '2025-05→\t-\t-\t300.00\tΣ8B')" "lifetime row carries the anchor date, total cost and tokens" &&
   # Round-trip through the actual reader (agentbar-lib's paint_usage), not
   # just the raw tab string: a "-" sentinel that read() still collapses
   # would pass the line above and fail here.
@@ -119,7 +119,7 @@ test_usage_rows_includes_lifetime_row() {
     rendered=$(paint_usage stub 0 0)
     printf '%s' "$rendered" | grep -q '\$300.00' &&
     printf '%s' "$rendered" | grep -q 'Σ8B' &&
-    ! printf '%s' "$rendered" | grep -qE "May'25:.*%"
+    ! printf '%s' "$rendered" | grep -qE "2025-05→:.*%"
   )
 }
 

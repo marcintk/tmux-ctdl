@@ -146,7 +146,7 @@ claude_usage_rows() {
   _fmt_tokens "$(state_get tokens "$agent" lifetime)" lifetime_tok
   lifetime_since=$(state_get since "$agent" lifetime)
   if [ -n "$lifetime_since" ]; then
-    lifetime_label="Since $(date -d "$lifetime_since" +"%b'%y" 2>/dev/null || printf '%s' "$lifetime_since")"
+    lifetime_label="$(date -d "$lifetime_since" +"%Y-%m→" 2>/dev/null || printf '%s' "$lifetime_since")"
   else
     lifetime_label="Lifetime"
   fi
