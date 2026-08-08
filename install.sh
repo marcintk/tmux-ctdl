@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# ctdl installer — idempotent. Deploys this repo to ~/.config/tmux/workspace
+# ctdl installer — idempotent. Deploys this repo to ~/.config/tmux/tmux-ctdl
 # and appends integration snippets to zshrc / tmux.conf / Claude settings.json.
 # Safe to re-run: each step checks for its own marker before touching a file.
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET="${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}"
+TARGET="${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}"
 ZSHRC="${ZSHRC:-$HOME/.config/zsh/.zshrc}"
 TMUX_CONF="${TMUX_CONF:-$HOME/.config/tmux/tmux.conf}"
 CLAUDE_SETTINGS="${CLAUDE_SETTINGS:-$HOME/.claude/settings.json}"

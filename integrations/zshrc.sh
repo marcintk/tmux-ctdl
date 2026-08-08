@@ -1,3 +1,3 @@
 # Tmux layout functions (ctdl, ctdlm)
-[[ -f ~/.config/tmux/workspace/tmux-ctdl.sh ]] && source ~/.config/tmux/workspace/tmux-ctdl.sh
+[[ -f ~/.config/tmux/tmux-ctdl/tmux-ctdl.sh ]] && source ~/.config/tmux/tmux-ctdl/tmux-ctdl.sh
 alias dev='ctdlm'

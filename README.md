@@ -20,7 +20,7 @@ cd ~/Development/tmux-ctdl
 ./install.sh
 ```
 
-Deploys this repo to `$TMUX_CTDL_HOME` (default `~/.config/tmux/workspace`)
+Deploys this repo to `$TMUX_CTDL_HOME` (default `~/.config/tmux/tmux-ctdl`)
 and appends integration snippets — marked, idempotent, safe to re-run — to:
 
 - `~/.config/zsh/.zshrc` — sources `tmux-ctdl.sh`, defines `dev` alias
@@ -41,7 +41,7 @@ leaves your copy at `$TARGET/tmux-ctdl.conf` alone on every reinstall after.
 **`tmux-ctdl.sh`** is the only file any external system calls — tmux keybinds,
 tmux status-formats, Claude Code hooks.
 
-**Sourced** (shell rc): `source ~/.config/tmux/workspace/tmux-ctdl.sh` defines
+**Sourced** (shell rc): `source ~/.config/tmux/tmux-ctdl/tmux-ctdl.sh` defines
 `ctdl` (build 3-pane layout: agent / change-tracker / terminal) and `ctdlm`
 ("multi" — one `ctdl` window per git workspace under the current dir, or
 `~/Development`; works outside tmux too, re-invokes itself inside a new session).
