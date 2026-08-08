@@ -1,4 +1,9 @@
-# ctdl
+# tmux-ctdl
+
+**ctdl** = **C**oding **T**mux **D**ev **L**ayout — the name of the script
+and shell functions (`ctdl`/`ctdlm`) this repo ships. `tmux-ctdl` is the repo
+name (searchable, states its home); `ctdl` stays the command you actually
+type.
 
 tmux dev layout (`ctdl`) + agent status bar/badges for Claude Code and
 Copilot. Everything boots through `workspace-boot.sh`, which reads
@@ -10,8 +15,8 @@ itself (idempotent, so re-requesting an already-loaded lib is free).
 ## Install
 
 ```sh
-git clone <this-repo> ~/Development/ctdl   # or wherever
-cd ~/Development/ctdl
+git clone <this-repo> ~/Development/tmux-ctdl   # or wherever
+cd ~/Development/tmux-ctdl
 ./install.sh
 ```
 
