@@ -32,8 +32,8 @@ jobs:
       - name: Run coverage
         run: bash tests/run-coverage.sh
 
-      - name: Enforce coverage gate (min 90% per file)
-        run: bash tests/check-coverage.sh 90
+      - name: Enforce coverage gate (100% per file)
+        run: bash tests/check-coverage.sh 100
 
       - name: Upload coverage report
         if: always()
