@@ -7,11 +7,11 @@
 # Every tmux call goes through tmux-lib.sh.
 #
 # Config-agnostic: callers (tmux-ctdl.sh's toggle/respawn verbs, tmux.conf's bind C)
-# source workspace.conf + the agent module themselves and pass the resulting
+# source tmux-ctdl.conf + the agent module themselves and pass the resulting
 # commands in as arguments.
 
-. "${WORKSPACE_HOME:-$HOME/.config/tmux/workspace}/workspace-boot.sh"
-workspace_boot tmux
+. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+tmux_ctdl_boot tmux
 
 # ── Role accessors ───────────────────────────────────────────────────────
 # All take the calling pane as their first argument, so options resolve

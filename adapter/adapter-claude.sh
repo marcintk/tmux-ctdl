@@ -5,8 +5,8 @@
 # if not already loaded.
 
 if ! declare -f get_agent_usage >/dev/null 2>&1; then
-  . "${WORKSPACE_HOME:-$HOME/.config/tmux/workspace}/workspace-boot.sh"
-  workspace_boot adapter
+  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+  tmux_ctdl_boot adapter
 fi
 
 AGENT_LABEL="Claude"
@@ -146,7 +146,7 @@ claude_usage_rows() {
 # turn that just ended. The transcript is the only per-turn source.
 
 # claude_effort_level — Claude Code's own effortLevel knob. It lives in Claude's
-# settings, not workspace.conf, so reading it is this module's business.
+# settings, not tmux-ctdl.conf, so reading it is this module's business.
 # CLAUDE_SETTINGS is injectable for tests.
 claude_effort_level() {
   jq -r '.effortLevel // "default"' "${CLAUDE_SETTINGS:-$HOME/.claude/settings.json}" 2>/dev/null \

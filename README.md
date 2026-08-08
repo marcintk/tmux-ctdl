@@ -6,10 +6,10 @@ name (searchable, states its home); `ctdl` stays the command you actually
 type.
 
 tmux dev layout (`ctdl`) + agent status bar/badges for Claude Code and
-Copilot. Everything boots through `workspace-boot.sh`, which reads
-`workspace.conf` then sources requested libs by name (`tmux`, `state`,
+Copilot. Everything boots through `tmux-ctdl-boot.sh`, which reads
+`tmux-ctdl.conf` then sources requested libs by name (`tmux`, `state`,
 `layout`, `adapter`, `wintab`, `agentbar`) — no caller hardcodes a path
-except `tmux-ctdl.sh` itself. A lib needing another lib calls `workspace_boot`
+except `tmux-ctdl.sh` itself. A lib needing another lib calls `tmux_ctdl_boot`
 itself (idempotent, so re-requesting an already-loaded lib is free).
 
 ## Install
@@ -20,7 +20,7 @@ cd ~/Development/tmux-ctdl
 ./install.sh
 ```
 
-Deploys this repo to `$WORKSPACE_HOME` (default `~/.config/tmux/workspace`)
+Deploys this repo to `$TMUX_CTDL_HOME` (default `~/.config/tmux/workspace`)
 and appends integration snippets — marked, idempotent, safe to re-run — to:
 
 - `~/.config/zsh/.zshrc` — sources `tmux-ctdl.sh`, defines `dev` alias
@@ -33,7 +33,7 @@ and appends integration snippets — marked, idempotent, safe to re-run — to:
 Raw snippets live in [`integrations/`](integrations/) if you'd rather apply
 by hand. Per-agent wiring detail: [`docs/agents/claude.md`](docs/agents/claude.md),
 [`docs/agents/copilot.md`](docs/agents/copilot.md). Copy
-`workspace.conf.example` → `workspace.conf` to pick `CODING_AGENT` (the
+`tmux-ctdl.conf.example` → `tmux-ctdl.conf` to pick `CODING_AGENT` (the
 installer does this for you if missing).
 
 ## Entry point
@@ -59,16 +59,16 @@ tmux status-formats, Claude Code hooks.
 | `agent-footer` | `adapter_footer` | Claude `Stop` hook (stdin JSON, stdout answer) |
 | `agent-pull-usage` | `adapter_pull_usage` | `wintab-tick`, rate-limited by `USAGE_REFRESH` (Copilot has no hooks, so it's polled) |
 
-`badge`/`push`/`pull` act on `CODING_AGENT` (`workspace.conf`) — no agent arg,
+`badge`/`push`/`pull` act on `CODING_AGENT` (`tmux-ctdl.conf`) — no agent arg,
 one active agent's hooks assumed wired at a time.
 
 ## Directory layout
 
 ```
-workspace/
-  tmux-ctdl.sh             external entry point: sourceable (ctdl, ctdlm) + executable (verbs)
-  workspace-boot.sh   the one way into the runtime; loads conf + libs
-  workspace.conf      active agent, editor/tracker commands, timing — overrides only,
+tmux-ctdl/
+  tmux-ctdl.sh        external entry point: sourceable (ctdl, ctdlm) + executable (verbs)
+  tmux-ctdl-boot.sh   the one way into the runtime; loads conf + libs
+  tmux-ctdl.conf      active agent, editor/tracker commands, timing — overrides only,
                       every colour/threshold defaults at the module that reads it
   libs/
     tmux-lib.sh       only module that knows tmux syntax + where "here" is

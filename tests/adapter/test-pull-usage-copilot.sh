@@ -9,16 +9,16 @@ SCRIPTS="$DIR/../.."
 
 command -v sqlite3 >/dev/null 2>&1 || { echo "skip: sqlite3 not installed"; exit 0; }
 
-# WORKSPACE_HOME points the boot module at the repo; WORKSPACE_CONF pins
-# CODING_AGENT=copilot regardless of the live workspace.conf's setting.
-export WORKSPACE_HOME="$(cd "$DIR/../.." && pwd)"
+# TMUX_CTDL_HOME points the boot module at the repo; TMUX_CTDL_CONF pins
+# CODING_AGENT=copilot regardless of the live tmux-ctdl.conf's setting.
+export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 CONF_DIR=$(mktemp -d)
-export WORKSPACE_CONF="$CONF_DIR/workspace.conf"
+export TMUX_CTDL_CONF="$CONF_DIR/tmux-ctdl.conf"
 
 # _write_conf <usage_refresh> — regenerate the scratch conf. Default 0 so a
 # pull always re-queries the db; the rate-limit test asks for a real interval.
 _write_conf() {
-  cat > "$WORKSPACE_CONF" << CONF
+  cat > "$TMUX_CTDL_CONF" << CONF
 CODING_AGENT="copilot"
 USAGE_REFRESH="${1:-0}"
 CONF
@@ -73,7 +73,7 @@ test_collect_and_parse_shared_direct() {
   _make_db "$DB_DIR/db.sqlite" GPT-5 high
   local out
   out=$(bash -c '. "$1"; COPILOT_DB="$2" copilot_collect | copilot_parse_shared' \
-        _ "$WORKSPACE_HOME/adapter/adapter-copilot.sh" "$DB_DIR/db.sqlite")
+        _ "$TMUX_CTDL_HOME/adapter/adapter-copilot.sh" "$DB_DIR/db.sqlite")
   assert_contains "$out" "$(printf 'model\tGPT-5')" "model parsed directly" &&
   assert_contains "$out" "$(printf 'effort\thigh')" "effort parsed directly"
 }

@@ -7,14 +7,14 @@ DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/helpers.sh"
 SCRIPTS="$DIR/.."
 
-export WORKSPACE_HOME="$(cd "$DIR/.." && pwd)"
+export TMUX_CTDL_HOME="$(cd "$DIR/.." && pwd)"
 CONF_DIR=$(mktemp -d)
-cat > "$CONF_DIR/workspace.conf" << CONF
+cat > "$CONF_DIR/tmux-ctdl.conf" << CONF
 CODING_AGENT="claude"
 EDITOR_CMD="nvim"
 CHANGE_TRACKER_CMD="lazygit"
 CONF
-export WORKSPACE_CONF="$CONF_DIR/workspace.conf"
+export TMUX_CTDL_CONF="$CONF_DIR/tmux-ctdl.conf"
 trap 'rm -rf "$CONF_DIR"' EXIT
 
 setup() {

@@ -2,10 +2,16 @@
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../helpers.sh"
 SCRIPTS="$DIR/../.."
+export TMUX_CTDL_HOME="$SCRIPTS"
+CONF_DIR=$(mktemp -d)
+cat > "$CONF_DIR/tmux-ctdl.conf" << CONF
+CODING_AGENT="claude"
+CONF
+export TMUX_CTDL_CONF="$CONF_DIR/tmux-ctdl.conf"
 
 export AGENT_TMP_DIR
 AGENT_TMP_DIR=$(mktemp -d)
-trap 'rm -rf "$AGENT_TMP_DIR"' EXIT
+trap 'rm -rf "$AGENT_TMP_DIR" "$CONF_DIR"' EXIT
 
 setup() {
   rm -f "${AGENT_TMP_DIR}/agent-shared-claude-"* "${AGENT_TMP_DIR}/agent-ctx-claude-"*
@@ -227,7 +233,7 @@ test_ctx_used_max_suffix_shown_when_positive() {
   assert_contains "$(ctx_out 25 50000 200000)" "50k/200k"
 }
 
-# kfmt now lives in adapter-lib.sh (agentbar-lib sources it via `workspace_boot
+# kfmt now lives in adapter-lib.sh (agentbar-lib sources it via `tmux_ctdl_boot
 # state adapter`) — every ${AGENT}_usage_rows uses it to build a tokens field;
 # see test-adapter-claude.sh's test_usage_rows_show_distinct_tokens_per_row.
 test_kfmt_below_1000_shows_raw() {

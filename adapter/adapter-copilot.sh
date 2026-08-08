@@ -4,11 +4,11 @@
 # parsers. Defines Copilot's identity and all Copilot-specific functions.
 # Standalone: sources adapter-lib.sh if not already loaded.
 #
-# Enable by setting CODING_AGENT=copilot in workspace.conf.
+# Enable by setting CODING_AGENT=copilot in tmux-ctdl.conf.
 
 if ! declare -f get_agent_usage >/dev/null 2>&1; then
-  . "${WORKSPACE_HOME:-$HOME/.config/tmux/workspace}/workspace-boot.sh"
-  workspace_boot adapter
+  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+  tmux_ctdl_boot adapter
 fi
 
 AGENT_LABEL="Copilot"

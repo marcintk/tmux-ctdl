@@ -14,4 +14,4 @@ Pull-based — Copilot CLI has no hook mechanism, so `ctdl` polls it instead.
 Adapter module: `adapter/adapter-copilot.sh`. No settings.json patch needed —
 there's nothing to hook.
 
-Set `CODING_AGENT="copilot"` in `workspace.conf`.
+Set `CODING_AGENT="copilot"` in `tmux-ctdl.conf`.

@@ -7,6 +7,7 @@
 # and usage_refresh_secs.
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../helpers.sh"
+export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 LIB="$DIR/../../adapter/adapter-lib.sh"
 
 export AGENT_TMP_DIR

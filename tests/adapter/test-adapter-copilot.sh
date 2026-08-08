@@ -4,22 +4,22 @@
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../helpers.sh"
 ADAPTER="$DIR/../../adapter"
-# WORKSPACE_HOME points the boot module at the repo; WORKSPACE_CONF at a scratch
+# TMUX_CTDL_HOME points the boot module at the repo; TMUX_CTDL_CONF at a scratch
 # conf naming the agent and nothing else — the palette defaults at the module
 # that reads it, so a test never restates it. No HOME manipulation needed.
-export WORKSPACE_HOME="$(cd "$DIR/../.." && pwd)"
+export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 
 # End-to-end: enable copilot in AGENTS and confirm the display renders it —
 # model shown, usage segment gracefully omitted (copilot_format_usage returns
 # early when today/week/month are empty).
 test_display_renders_copilot_model_only() {
   local th; th=$(mktemp -d)
-  echo "CODING_AGENT='copilot'" > "$th/workspace.conf"
+  echo "CODING_AGENT='copilot'" > "$th/tmux-ctdl.conf"
   local tmp; tmp=$(mktemp -d)
   printf 'model\tGPT-5\neffort\thigh\n' > "$tmp/agent-shared-copilot-test-session-@1"
   local out
-  out=$(WORKSPACE_CONF="$th/workspace.conf" AGENT_TMP_DIR="$tmp" \
-         bash "$WORKSPACE_HOME/tmux-ctdl.sh" agentbar test-session @1)
+  out=$(TMUX_CTDL_CONF="$th/tmux-ctdl.conf" AGENT_TMP_DIR="$tmp" \
+         bash "$TMUX_CTDL_HOME/tmux-ctdl.sh" agentbar test-session @1)
   rm -rf "$th" "$tmp"
   assert_contains "$out" "Copilot: GPT-5" "copilot model line rendered" &&
   ! printf '%s' "$out" | grep -qF "Today:"  # no usage segment without data
@@ -28,12 +28,12 @@ test_display_renders_copilot_model_only() {
 # When usage data IS present, copilot_format_usage renders Today/Week/Month.
 test_display_renders_copilot_usage() {
   local th; th=$(mktemp -d)
-  echo "CODING_AGENT='copilot'" > "$th/workspace.conf"
+  echo "CODING_AGENT='copilot'" > "$th/tmux-ctdl.conf"
   local tmp; tmp=$(mktemp -d)
   printf 'today\t12.5\nweek\t40\nmonth\t63.2\nmodel\tGPT-5\neffort\thigh\n' > "$tmp/agent-shared-copilot-test-session-@1"
   local out
-  out=$(WORKSPACE_CONF="$th/workspace.conf" AGENT_TMP_DIR="$tmp" \
-         bash "$WORKSPACE_HOME/tmux-ctdl.sh" agentbar test-session @1)
+  out=$(TMUX_CTDL_CONF="$th/tmux-ctdl.conf" AGENT_TMP_DIR="$tmp" \
+         bash "$TMUX_CTDL_HOME/tmux-ctdl.sh" agentbar test-session @1)
   rm -rf "$th" "$tmp"
   assert_contains "$out" "Today: 12.5%"  &&
   assert_contains "$out" "Week: 40.0%"   &&

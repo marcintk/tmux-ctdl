@@ -26,13 +26,13 @@
 #                                        <agent>_collect, rate-limited by
 #                                        USAGE_REFRESH)
 #
-# badge/push/pull act on CODING_AGENT (workspace.conf) — they don't take an
+# badge/push/pull act on CODING_AGENT (tmux-ctdl.conf) — they don't take an
 # agent argument. Whichever tool's hooks are configured is assumed to be the
 # active one; there's no support yet for two agents' hooks feeding this at once.
 
 _ctdl_boot() {
-  . "${WORKSPACE_HOME:-$HOME/.config/tmux/workspace}/workspace-boot.sh"
-  workspace_boot "$@"
+  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+  tmux_ctdl_boot "$@"
 }
 
 # Coding Tmux Dev Layout — the ctdl pane layout in the current window
@@ -68,7 +68,7 @@ ctdlm() {
 
 # ── Verb dispatch (executed, not sourced) ────────────────────────────────────
 # Each arm is boot + one lib verb — the lib owns the behaviour, this owns
-# nothing but routing. See workspace-boot.sh for lib names.
+# nothing but routing. See tmux-ctdl-boot.sh for lib names.
 _ctdl_main() {
   local verb=$1; shift
 

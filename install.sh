@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET="${WORKSPACE_HOME:-$HOME/.config/tmux/workspace}"
+TARGET="${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}"
 ZSHRC="${ZSHRC:-$HOME/.config/zsh/.zshrc}"
 TMUX_CONF="${TMUX_CONF:-$HOME/.config/tmux/tmux.conf}"
 CLAUDE_SETTINGS="${CLAUDE_SETTINGS:-$HOME/.claude/settings.json}"
@@ -18,10 +18,10 @@ log() { echo "ctdl-install: $*"; }
 deploy_workspace() {
   mkdir -p "$TARGET"
   rsync -a --delete --exclude='.git' --exclude='.coverage' \
-    --exclude='workspace.conf' "$REPO_DIR"/ "$TARGET"/
-  if [[ ! -f "$TARGET/workspace.conf" ]]; then
-    cp "$REPO_DIR/workspace.conf.example" "$TARGET/workspace.conf"
-    log "wrote $TARGET/workspace.conf from example — edit CODING_AGENT if needed"
+    --exclude='tmux-ctdl.conf' "$REPO_DIR"/ "$TARGET"/
+  if [[ ! -f "$TARGET/tmux-ctdl.conf" ]]; then
+    cp "$REPO_DIR/tmux-ctdl.conf.example" "$TARGET/tmux-ctdl.conf"
+    log "wrote $TARGET/tmux-ctdl.conf from example — edit CODING_AGENT if needed"
   fi
   log "deployed to $TARGET"
 }

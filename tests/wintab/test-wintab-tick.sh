@@ -7,9 +7,9 @@ DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 SCRIPTS="$DIR/../.."
 . "$DIR/../../libs/state-lib.sh"
 
-# WORKSPACE_HOME points the boot module at the repo (real wintab-lib), while
-# WORKSPACE_CONF points at a scratch conf naming a stub agent module.
-export WORKSPACE_HOME="$(cd "$DIR/../.." && pwd)"
+# TMUX_CTDL_HOME points the boot module at the repo (real wintab-lib), while
+# TMUX_CTDL_CONF points at a scratch conf naming a stub agent module.
+export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 TEST_HOME=$(mktemp -d)
 # Scratch state dir so a test run never clobbers the live /tmp status files.
 export AGENT_TMP_DIR
@@ -21,7 +21,7 @@ _make_workspace() {
   cat > "$TEST_HOME/adapter-claude.sh" << 'AGENT'
 claude_live_cwds() { printf '%s\n' "${MOCK_LIVE_PPATH:-}"; }
 AGENT
-  cat > "$TEST_HOME/workspace.conf" << CONF
+  cat > "$TEST_HOME/tmux-ctdl.conf" << CONF
 CODING_AGENT="claude"
 CODING_AGENT_MODULE="$TEST_HOME/adapter-claude.sh"
 WINTAB_LIVE_GRACE=5
@@ -36,7 +36,7 @@ _last_badge_cleared() {
 setup() {
   _make_workspace
   rm -f /tmp/mock-tmux-calls "$AGENT_TMP_DIR"/agent-*
-  export WORKSPACE_CONF="$TEST_HOME/workspace.conf"
+  export TMUX_CTDL_CONF="$TEST_HOME/tmux-ctdl.conf"
   export PATH="$FIXTURES:$PATH"
   export MOCK_SESSION=test-session MOCK_WIN=@1 MOCK_PPATH=/home/user/project
   unset MOCK_LIVE_PPATH MOCK_PPATH2 MOCK_BADGE

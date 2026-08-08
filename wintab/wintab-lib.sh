@@ -11,10 +11,10 @@
 # through state-lib, tmux through tmux-lib.
 #
 # The caller must have CODING_AGENT and the BADGE_* palette in scope (both entry
-# points source workspace.conf before calling in).
+# points source tmux-ctdl.conf before calling in).
 
-. "${WORKSPACE_HOME:-$HOME/.config/tmux/workspace}/workspace-boot.sh"
-workspace_boot state tmux
+. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+tmux_ctdl_boot state tmux
 
 # badge <color> <glyph> — render one window badge: a blinking coloured glyph
 # wrapped so it resets to default after. The single place that knows tmux badge
@@ -67,7 +67,7 @@ wintab_next_poll() {
 # BADGE_RUNNING — an animated blink beyond tmux's own. The leading space matches
 # what tmux.conf expects right after #W.
 #
-# The BADGE_* colours default here, like the icons above: workspace.conf names
+# The BADGE_* colours default here, like the icons above: tmux-ctdl.conf names
 # only what a user wants different, so a caller that sources no conf at all
 # still paints the real badge instead of `#[fg=,blink]`.
 wintab_badge() {

@@ -14,4 +14,4 @@ Adapter module: `adapter/adapter-claude.sh`. Settings patch:
 [`integrations/claude-settings.json`](../../integrations/claude-settings.json)
 (merged by `install.sh`, or apply by hand — see repo root README).
 
-Set `CODING_AGENT="claude"` in `workspace.conf`.
+Set `CODING_AGENT="claude"` in `tmux-ctdl.conf`.

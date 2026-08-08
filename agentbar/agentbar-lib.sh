@@ -5,8 +5,8 @@
 # reconstructing an entry point's environment. tmux-ctdl.sh's `agentbar` verb is
 # the only caller and does nothing but parse args and call agentbar_render.
 
-. "${WORKSPACE_HOME:-$HOME/.config/tmux/workspace}/workspace-boot.sh"
-workspace_boot state adapter
+. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+tmux_ctdl_boot state adapter
 
 SEP='#[fg=brightblack] | #[default]'
 AGENT_SEP='#[fg=brightblack] ‖ #[default]'
@@ -31,7 +31,7 @@ _tier_of() {
 }
 
 # _ladder_tier <RATE|CTX> <pct> — the two threshold sets in use. The numbers
-# ARE the default palette: workspace.conf only names the ones a user wants
+# ARE the default palette: tmux-ctdl.conf only names the ones a user wants
 # different, so a caller (or a test) that sets nothing still renders the real
 # thing. The SAFE floors differ on purpose: a rate limit at 5% isn't worth
 # colouring, a context window at 5% is.
@@ -135,7 +135,7 @@ paint_usage() {
 }
 
 # model_style <model> — the model pill's colours, by tier. The tier lists are
-# defaulted here like the rest of the palette; workspace.conf overrides them by
+# defaulted here like the rest of the palette; tmux-ctdl.conf overrides them by
 # naming SAFE_MODELS/WARN_MODELS. Reuses _tier_colors so a model pill and a
 # usage pill of the same tier can never drift apart.
 model_style() {

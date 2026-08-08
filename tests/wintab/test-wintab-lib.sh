@@ -4,6 +4,7 @@
 # are driven end-to-end in test-wintab-badge.sh / test-wintab-tick.sh.
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../helpers.sh"
+export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 . "$DIR/../../wintab/wintab-lib.sh"
 
 export AGENT_TMP_DIR

@@ -3,6 +3,7 @@
 # verbs. Driven against the fixtures/tmux adapter, like tmux-lib itself.
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../helpers.sh"
+export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 . "$DIR/../../libs/layout-lib.sh"
 
 setup() {

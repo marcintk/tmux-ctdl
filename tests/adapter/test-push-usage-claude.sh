@@ -4,14 +4,14 @@ DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../../libs/state-lib.sh"
 SCRIPTS="$DIR/../.."
 
-# WORKSPACE_HOME points the boot module at the repo; WORKSPACE_CONF pins
-# CODING_AGENT=claude regardless of the live workspace.conf's setting.
-export WORKSPACE_HOME="$(cd "$DIR/../.." && pwd)"
+# TMUX_CTDL_HOME points the boot module at the repo; TMUX_CTDL_CONF pins
+# CODING_AGENT=claude regardless of the live tmux-ctdl.conf's setting.
+export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 CONF_DIR=$(mktemp -d)
-cat > "$CONF_DIR/workspace.conf" << CONF
+cat > "$CONF_DIR/tmux-ctdl.conf" << CONF
 CODING_AGENT="claude"
 CONF
-export WORKSPACE_CONF="$CONF_DIR/workspace.conf"
+export TMUX_CTDL_CONF="$CONF_DIR/tmux-ctdl.conf"
 
 # Scratch state dir so a test run never clobbers the live /tmp status files.
 export AGENT_TMP_DIR

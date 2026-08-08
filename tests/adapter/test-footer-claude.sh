@@ -8,19 +8,19 @@ DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../helpers.sh"
 SCRIPTS="$DIR/../.."
 
-export WORKSPACE_HOME="$(cd "$DIR/../.." && pwd)"
+export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 CONF_DIR=$(mktemp -d)
-cat > "$CONF_DIR/workspace.conf" << CONF
+cat > "$CONF_DIR/tmux-ctdl.conf" << CONF
 CODING_AGENT="claude"
 CONF
-export WORKSPACE_CONF="$CONF_DIR/workspace.conf"
+export TMUX_CTDL_CONF="$CONF_DIR/tmux-ctdl.conf"
 
 export AGENT_TMP_DIR
 AGENT_TMP_DIR=$(mktemp -d)
 WORK=$(mktemp -d)
 trap 'rm -rf "$AGENT_TMP_DIR" "$CONF_DIR" "$WORK"' EXIT
 
-. "$WORKSPACE_HOME/adapter/adapter-claude.sh"
+. "$TMUX_CTDL_HOME/adapter/adapter-claude.sh"
 
 # effortLevel is read from Claude's own settings — point it at a scratch copy so
 # the assertions don't drift when the real setting changes.

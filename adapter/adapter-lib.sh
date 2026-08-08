@@ -64,8 +64,8 @@
 # State lives in state-lib.sh (verbs, not paths) and every tmux call goes through
 # tmux-lib.sh — this module touches neither the filesystem nor tmux directly.
 
-. "${WORKSPACE_HOME:-$HOME/.config/tmux/workspace}/workspace-boot.sh"
-workspace_boot state tmux
+. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+tmux_ctdl_boot state tmux
 
 # ── State value schema ───────────────────────────────────────────────────────
 # Shared/ctx values are key<TAB>value lines (kv_fill / state_get_kv, from

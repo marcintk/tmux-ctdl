@@ -3,8 +3,8 @@
 # declares its own identity — AGENT_LABEL, AGENT_CMD, AGENT_COST_* — as soon as
 # it's sourced below. Nothing agent-specific lives in this file.
 #
-# workspace_boot's `agent` lib name resolves this to
-# $WORKSPACE_HOME/adapter/adapter-<CODING_AGENT>.sh on its own (workspace-boot.sh)
+# tmux_ctdl_boot's `agent` lib name resolves this to
+# $TMUX_CTDL_HOME/adapter/adapter-<CODING_AGENT>.sh on its own (tmux-ctdl-boot.sh)
 # — set CODING_AGENT_MODULE here only to point at a module that isn't at that
 # path (a test stub, a module outside this repo).
 CODING_AGENT="claude"      # claude | copilot
