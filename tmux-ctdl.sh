@@ -31,7 +31,7 @@
 # active one; there's no support yet for two agents' hooks feeding this at once.
 
 _ctdl_boot() {
-  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot.sh"
+  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot-lib.sh"
   tmux_ctdl_boot "$@"
 }
 
@@ -81,16 +81,20 @@ ctdlm() {
     return 0
   fi
 
-  layout_open_workspaces "$1" "$TMUX_PANE" ctdl
+  local first=$1
   shift
+  # New sessions for the extra dirs first: layout_open_workspaces (below)
+  # ends by killing $TMUX_PANE, the window this shell is running in — do
+  # that last or the loop below never runs.
   for d in "$@"; do
     layout_open_workspaces_new_session "$d" ctdl
   done
+  layout_open_workspaces "$first" "$TMUX_PANE" ctdl
 }
 
 # ── Verb dispatch (executed, not sourced) ────────────────────────────────────
 # Each arm is boot + one lib verb — the lib owns the behaviour, this owns
-# nothing but routing. See libs/boot.sh for lib names.
+# nothing but routing. See libs/boot-lib.sh for lib names.
 _ctdl_main() {
   local verb=$1; shift
 

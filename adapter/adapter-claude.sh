@@ -5,7 +5,7 @@
 # if not already loaded.
 
 if ! declare -f get_agent_usage >/dev/null 2>&1; then
-  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot.sh"
+  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot-lib.sh"
   tmux_ctdl_boot adapter
 fi
 

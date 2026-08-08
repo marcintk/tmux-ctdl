@@ -5,7 +5,7 @@
 # reconstructing an entry point's environment. tmux-ctdl.sh's `agentbar` verb is
 # the only caller and does nothing but parse args and call agentbar_render.
 
-. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot.sh"
+. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot-lib.sh"
 tmux_ctdl_boot state adapter
 
 SEP='#[fg=brightblack] | #[default]'

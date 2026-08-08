@@ -1,16 +1,37 @@
 # tmux-ctdl
 
-**ctdl** = **C**oding **T**mux **D**ev **L**ayout — the name of the script
-and shell functions (`ctdl`/`ctdlm`) this repo ships. `tmux-ctdl` is the repo
-name (searchable, states its home); `ctdl` stays the command you actually
-type.
+**ctdl** = **C**oding **T**mux **D**ev **L**ayout. A tmux dev layout for
+working with a coding agent (Claude Code, GitHub Copilot CLI), plus a status
+bar showing usage/cost and a per-window badge showing what each agent is
+doing.
 
-tmux dev layout (`ctdl`) + agent status bar/badges for Claude Code and
-Copilot. Everything boots through `libs/boot.sh`, which reads
-`tmux-ctdl.conf` then sources requested libs by name (`tmux`, `state`,
-`layout`, `adapter`, `wintab`, `agentbar`) — no caller hardcodes a path
-except `tmux-ctdl.sh` itself. A lib needing another lib calls `tmux_ctdl_boot`
-itself (idempotent, so re-requesting an already-loaded lib is free).
+## What you get
+
+Run `ctdl` in a tmux window and it splits into three panes:
+
+```
+┌─────────────┬────────────────┐
+│             │  change        │
+│  coding     │  tracker       │
+│  agent      │  (lazygit)     │
+│  (claude)   ├────────────────┤
+│             │  terminal      │
+└─────────────┴────────────────┘
+```
+
+- **Left**: your coding agent (`claude` by default — configurable)
+- **Top right**: a change tracker (`lazygit` by default) — hit a key to swap
+  it for your editor (`nvim` by default) and back
+- **Bottom right**: a plain terminal
+
+The outer status bar shows the agent's context window, usage/cost, and (for
+Claude) a running lifetime total. Each window also gets a small badge next to
+its name showing whether the agent in it is running, waiting on you, or done.
+
+`ctdlm` ("multi") does this for every git repo under a directory at once —
+one `ctdl` window per repo. Give it more than one directory
+(`ctdlm ~/Development ~/Development/ha`) and each one gets its own tmux
+session, still one window per repo inside it.
 
 ## Install
 
@@ -32,63 +53,35 @@ and appends integration snippets — marked, idempotent, safe to re-run — to:
 
 Raw snippets live in [`integrations/`](integrations/) if you'd rather apply
 by hand. Per-agent wiring detail: [`docs/agents/claude.md`](docs/agents/claude.md),
-[`docs/agents/copilot.md`](docs/agents/copilot.md). Edit `tmux-ctdl.conf` to
-pick `CODING_AGENT` — the installer deploys it as-is on first install and
-leaves your copy at `$TARGET/tmux-ctdl.conf` alone on every reinstall after.
+[`docs/agents/copilot.md`](docs/agents/copilot.md).
 
-## Entry point
+## Configure
 
-**`tmux-ctdl.sh`** is the only file any external system calls — tmux keybinds,
-tmux status-formats, Claude Code hooks.
+Edit `tmux-ctdl.conf` (deployed to `$TMUX_CTDL_HOME/tmux-ctdl.conf` on first
+install, then left alone on every reinstall after):
 
-**Sourced** (shell rc): `source ~/.config/tmux/tmux-ctdl/tmux-ctdl.sh` defines
-`ctdl` (build 3-pane layout: agent / change-tracker / terminal) and `ctdlm`
-("multi" — one `ctdl` window per git workspace under the current dir, or
-`~/Development`; works outside tmux too, re-invokes itself inside a new session).
-Give `ctdlm` more than one dir (`ctdlm ~/Development ~/Development/ha`) to fan
-out across multiple tmux SESSIONS, one per dir, each with one window per git
-workspace inside it.
+- `CODING_AGENT` — `claude` or `copilot`
+- `AGENT_CMD` — the command that starts your agent in the left pane
+- `CHANGE_TRACKER_CMD` / `EDITOR_CMD` — what the top-right pane runs, and
+  what it swaps to on toggle
+- colours/thresholds for the status bar — every one has a default, only
+  name the ones you want different
 
-**Executed** (`tmux-ctdl.sh <verb> [args]`):
+## Usage
 
-| Verb | Calls | Used by |
-|---|---|---|
-| `tracker-editor-toggle <pane_id>` | `layout_toggle` | tmux `bind-key Space` |
-| `agent-respawn <pane_id>` | `layout_respawn_agent` | tmux `bind C` |
-| `wintab-tick <session>` | `wintab_tick` → `adapter_pull_usage` → `state_reap_stale` (own interval) | tmux `status-format[0]`, 1s |
-| `agentbar <sess> <win>` | `agentbar_render` | tmux `status-format[1]` |
-| `wintab-badge <RUNNING\|CLEAR\|DONE\|PERMISSION>` | `wintab_hook` | Claude Code hooks |
-| `agent-push-usage` | `adapter_push_usage` | Claude `statusLine` (stdin JSON) |
-| `agent-footer` | `adapter_footer` | Claude `Stop` hook (stdin JSON, stdout answer) |
-| `agent-pull-usage` | `adapter_pull_usage` | `wintab-tick`, rate-limited by `USAGE_REFRESH` (Copilot has no hooks, so it's polled) |
-
-`badge`/`push`/`pull` act on `CODING_AGENT` (`tmux-ctdl.conf`) — no agent arg,
-one active agent's hooks assumed wired at a time.
-
-## Directory layout
-
-```
-tmux-ctdl/
-  tmux-ctdl.sh        external entry point: sourceable (ctdl, ctdlm) + executable (verbs)
-  tmux-ctdl.conf      active agent, editor/tracker commands, timing — overrides only,
-                      every colour/threshold defaults at the module that reads it
-  libs/
-    boot.sh           the one way into the runtime; loads conf + libs
-    tmux-lib.sh       only module that knows tmux syntax + where "here" is
-    state-lib.sh      agent state store (get/put/mark/clear/exists/age) + reap_stale
-    layout-lib.sh     pane layout verbs, owns tmux window options
-  adapter/            per-agent identity: adapter-lib.sh (shared) + adapter-<agent>.sh
-  agentbar/           outer status bar (usage/cost) — agentbar-lib.sh, verbs only
-  wintab/             inner status bar (per-window badge) — wintab-lib.sh, verbs only
-  tests/              mirrors adapter/, agentbar/, wintab/, libs/ one-for-one
-```
-
-Naming: **area** = module dir (`layout · state · tmux · adapter · wintab ·
-agentbar`); **role** = `-lib` (sourceable verbs, no load-time side effects) or
-a verb name under `tmux-ctdl.sh`. No mechanism words (`hook`/`poll`/`cleanup`) in
-filenames — those describe the caller, not the code.
+- `ctdl` — build the 3-pane layout in the current tmux window
+- `ctdlm [dir...]` — one `ctdl` window per git repo under a dir (current dir,
+  or `~/Development` if it has none); multiple dirs each get their own
+  session. Works outside tmux too — starts one and re-enters.
+- **prefix + Space** — toggle the top-right pane between the change tracker
+  and your editor
+- **prefix + C** — restart the agent pane
 
 ## Module wiring
+
+For contributors: `tmux-ctdl.sh` is the only entry point anything external
+calls (tmux keybinds, status-formats, Claude Code hooks). Everything else
+loads through `libs/boot-lib.sh` on demand.
 
 ```mermaid
 graph TD
@@ -113,45 +106,6 @@ graph TD
   tmuxlib --> tmuxbin(["tmux binary"])
   state --> files(["AGENT_TMP_DIR (/tmp)"])
 ```
-
-## State: two bars, one store
-
-Nothing renders from a live process. Every writer puts state through
-`state-lib`, every reader pulls it back on its own clock — so a 1s status
-format never waits on `jq`/`sqlite3`/`ccusage`. Claude **pushes** usage via
-`statusLine` on every turn; Copilot has no hook, so it's **pulled** —
-`wintab-tick` calls `adapter_pull_usage`, rate-limited by `USAGE_REFRESH`,
-which runs a read-only query against Copilot's `session-store.db`. Which path
-an agent gets is decided by one fact: does it define `<agent>_collect`?
-
-```mermaid
-graph LR
-  push["adapter_push_usage<br/>(Claude statusLine)"] --> shared[["state: shared/ctx"]]
-  pull["adapter_pull_usage<br/>(Copilot, off wintab-tick)"] --> shared
-  hook["wintab_hook<br/>(Claude Code hook)"] --> phase[["state: phase"]]
-  tick["wintab_tick<br/>(liveness, 1s)"] --> phase
-
-  shared --> outer["agentbar_render<br/>outer bar"]
-  phase --> inner["wintab badge<br/>inner bar"]
-```
-
-Badge (`phase`) and usage (`shared`/`ctx`) never touch: inner bar answers *is
-this agent alive*, outer bar answers *what has it cost, how full is context*.
-
-### Per-agent contract (`adapter/adapter-lib.sh` header)
-
-| Piece | Required? | Claude | Copilot |
-|---|---|---|---|
-| `AGENT_LABEL`, `AGENT_CMD` | yes | set | set |
-| `<agent>_collect` | pull agents only | omitted (push) | reads `session-store.db` |
-| `<agent>_parse_shared` | yes | real | model/effort real, usage% blank (no quota endpoint) |
-| `<agent>_parse_context` | yes (stub OK) | real | stub — no context telemetry in db |
-| `<agent>_live_cwds` | yes | `~/.claude/sessions/*.json` | `pgrep -x copilot` — unreliable once wrapper execs into node |
-| `<agent>_incoming_stale` | push agents only | yes | n/a |
-| `<agent>_refresh_costs` | if billed in $ | yes (`ccusage`) | omitted (AI credits) |
-| `<agent>_footer` | if it has an end-of-turn hook | yes | omitted — no hook mechanism |
-
-State is namespaced `<kind> <agent> [keys...]`, so agents never collide.
 
 ## Tests
 

@@ -13,7 +13,7 @@
 # The caller must have CODING_AGENT and the BADGE_* palette in scope (both entry
 # points source tmux-ctdl.conf before calling in).
 
-. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot.sh"
+. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot-lib.sh"
 tmux_ctdl_boot state tmux
 
 # badge <color> <glyph> — render one window badge: a blinking coloured glyph
