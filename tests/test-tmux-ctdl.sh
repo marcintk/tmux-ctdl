@@ -119,18 +119,22 @@ test_ctdlm_inside_tmux_opens_workspaces() {
 
 # ctdlm() with no git workspace within 2 levels of $PWD falls back to
 # ~/Development (the one hardcoded path in tmux-ctdl.sh, per its own comment).
+# HOME is pointed at a scratch dir so the fallback branch runs the same on
+# every machine instead of skipping wherever ~/Development doesn't exist.
 test_ctdlm_falls_back_to_development_dir() {
-  [ -d ~/Development ] || { echo "skip: ~/Development doesn't exist here"; return 0; }
   setup
   export MOCK_NEW_PANE=%7
+  local scratch_home; scratch_home=$(mktemp -d)
+  mkdir -p "$scratch_home/Development"
   local nogit; nogit=$(mktemp -d)
   local out
   out=$(. "$SCRIPTS/tmux-ctdl.sh"
-        export TMUX=/tmp/fake-tmux-socket TMUX_PANE=mock-installer
+        export TMUX=/tmp/fake-tmux-socket TMUX_PANE=mock-installer HOME="$scratch_home"
         cd "$nogit" && ctdlm
         pwd)
-  rm -rf "$nogit"
-  assert_contains "$out" "$HOME/Development" "cwd fell back to ~/Development"
+  local expect="$scratch_home/Development"
+  rm -rf "$scratch_home" "$nogit"
+  assert_contains "$out" "$expect" "cwd fell back to ~/Development"
 }
 
 run_tests \
