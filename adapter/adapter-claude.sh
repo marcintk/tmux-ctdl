@@ -297,7 +297,7 @@ claude_cost_session() {
 # an absent one is "everything", which is exactly the anchor we want.
 claude_cost_lifetime() {
   npm exec ccusage -- daily --json 2>/dev/null \
-    | jq -r '(.daily // []) as $d | ($d | map(.totalCost // 0) | add // 0) as $c | ($d | map(.totalTokens // 0) | add // 0) as $t | ($d | map(.date) | min // "") as $s | "\($c)\t\($t)\t\($s)"'
+    | jq -r '(.daily // []) as $d | ($d | map(.totalCost // 0) | add // 0) as $c | ($d | map(.totalTokens // 0) | add // 0) as $t | ($d | map(.period) | min // "") as $s | "\($c)\t\($t)\t\($s)"'
 }
 
 # claude_refresh_costs <agent> — repopulate both slots' cost+tokens caches in
