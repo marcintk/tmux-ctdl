@@ -172,12 +172,16 @@ interval_secs() {
   esac
 }
 
-# kfmt <value> <varname> — <value> as a compact k-suffixed count in the
+# kfmt <value> <varname> — <value> as a compact k/M/B-suffixed count in the
 # caller's variable (nameref-free: printf -v respects the caller's scope by
 # name). For every <agent>_usage_rows building a tokens field.
 kfmt() {
   local v=${1:-0}
-  (( v >= 1000 )) && printf -v "$2" '%dk' "$(( v / 1000 ))" || printf -v "$2" '%s' "$v"
+  if   (( v >= 1000000000 )); then printf -v "$2" '%dB' "$(( v / 1000000000 ))"
+  elif (( v >= 1000000 ));    then printf -v "$2" '%dM' "$(( v / 1000000 ))"
+  elif (( v >= 1000 ));       then printf -v "$2" '%dk' "$(( v / 1000 ))"
+  else                             printf -v "$2" '%s' "$v"
+  fi
 }
 
 # ── Time formatting ──────────────────────────────────────────────────────────

@@ -25,6 +25,7 @@
 #                  live    <agent> <sess> <win>   marker: agent last seen live
 #   per slot       cost    <agent> <slot>     cached $-cost for one cost slot
 #                  tokens  <agent> <slot>     cached token total for one usage row
+#                  since   <agent> <slot>     cached anchor date for a cumulative slot (lifetime)
 #
 # rate used to be folded into shared and keyed per window — every tmux window
 # running the agent had its OWN process pushing its OWN last-known rate-limit
@@ -60,6 +61,7 @@ _state_path() {
     ctx)    printf '%s/agent-ctx-%s-%s-%s' "$tmp" "$agent" "${k1:-_}" "${k2:-0}" ;;
     cost)   printf '%s/agent-cost-%s-%s'   "$tmp" "${k1,,}" "$agent" ;;
     tokens) printf '%s/agent-tokens-%s-%s' "$tmp" "${k1,,}" "$agent" ;;
+    since)  printf '%s/agent-since-%s-%s'  "$tmp" "${k1,,}" "$agent" ;;
     *)      printf '%s/agent-%s-%s-%s-%s'  "$tmp" "$kind" "$agent" "$k1" "$k2" ;;
   esac
 }

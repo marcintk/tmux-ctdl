@@ -137,6 +137,25 @@ claude_usage_rows() {
 
   printf 'Session\t%s\t%s\t%s\t%s\n' "${session:-0}" "$block" "$session_cost" "$session_tok"
   printf 'Weekly\t%s\t%s\t%s\t%s\n'  "${weekly:-0}"  "$reset" "$weekly_cost"  "$weekly_tok"
+
+  # Lifetime: no rate to show (pct left empty — paint_usage drops the "N%"
+  # for a blank pct), just the running total since the earliest ccusage
+  # record. Label carries the anchor date so the row is self-explanatory.
+  local lifetime_cost lifetime_tok lifetime_since lifetime_label
+  lifetime_cost=$(state_get cost "$agent" lifetime); lifetime_cost="${lifetime_cost:--}"
+  _fmt_tokens "$(state_get tokens "$agent" lifetime)" lifetime_tok
+  lifetime_since=$(state_get since "$agent" lifetime)
+  if [ -n "$lifetime_since" ]; then
+    lifetime_label="Since $(date -d "$lifetime_since" +"%b'%y" 2>/dev/null || printf '%s' "$lifetime_since")"
+  else
+    lifetime_label="Lifetime"
+  fi
+  # pct and suffix are "-", not "": read's IFS-whitespace splitting on a tab
+  # stream collapses a genuinely empty field into its neighbour (same reason
+  # session/weekly's cost falls back to "-" above) — paint_usage treats "-"
+  # here as "omit", same sentinel, same reader.
+  [ -n "$lifetime_tok" ] && printf '%s\t-\t-\t%s\t%s\n' "$lifetime_label" "$lifetime_cost" "$lifetime_tok"
+  return 0
 }
 
 # ── End-of-turn footer ───────────────────────────────────────────────────────
@@ -273,6 +292,14 @@ claude_cost_session() {
     | jq -r '.blocks[-1] | "\(.costUSD // 0)\t\(.totalTokens // 0)"'
 }
 
+# claude_cost_lifetime — cost<TAB>tokens<TAB>since (earliest daily record's
+# date), summed over every day ccusage has on disk. No --since flag needed:
+# an absent one is "everything", which is exactly the anchor we want.
+claude_cost_lifetime() {
+  npm exec ccusage -- daily --json 2>/dev/null \
+    | jq -r '(.daily // []) as $d | ($d | map(.totalCost // 0) | add // 0) as $c | ($d | map(.totalTokens // 0) | add // 0) as $t | ($d | map(.date) | min // "") as $s | "\($c)\t\($t)\t\($s)"'
+}
+
 # claude_refresh_costs <agent> — repopulate both slots' cost+tokens caches in
 # the background, skipping any slot refreshed within USAGE_REFRESH.
 #
@@ -286,13 +313,14 @@ claude_refresh_costs() {
   local agent=$1 now refresh slot
   now=$(date +%s)
   refresh=$(usage_refresh_secs)
-  for slot in weekly session; do
+  for slot in weekly session lifetime; do
     [ "$(state_age "$now" cost "$agent" "$slot")" -gt "$refresh" ] && \
       ( flock -n 9 || exit 0
         out=$("claude_cost_${slot}") &&
-        IFS=$'\t' read -r cost_val tok_val <<< "$out" &&
+        IFS=$'\t' read -r cost_val tok_val since_val <<< "$out" &&
         state_put "$cost_val" cost   "$agent" "$slot" &&
-        state_put "$tok_val"  tokens "$agent" "$slot"
+        state_put "$tok_val"  tokens "$agent" "$slot" &&
+        { [ -z "$since_val" ] || state_put "$since_val" since "$agent" "$slot"; }
       ) 9>"$(state_lockfile "agent-cost-refresh-${slot}-${agent}.lock")" &
   done
   return 0

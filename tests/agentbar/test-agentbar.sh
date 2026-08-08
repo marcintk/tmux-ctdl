@@ -208,6 +208,15 @@ test_usage_seg_omits_tokens_when_absent() {
   ! printf '%s' "$out" | grep -qE 'T[0-9]'
 }
 
+# Lifetime-style row: "-" pct sentinel — no "N%" in the label, still tokens+cost.
+test_usage_seg_empty_pct_omits_percent() {
+  local out; out=$(usage_seg "$(printf 'Since May25\t-\t-\t12.34\tΣ8B')")
+  assert_contains "$out" "Since May25 " &&
+  assert_contains "$out" "\$12.34" &&
+  assert_contains "$out" "Σ8B" &&
+  ! printf '%s' "$out" | grep -qE '%'
+}
+
 # render_ctx: pure now — no state read, no tmux. Fed an already-filled array.
 test_ctx_renders_percent() {
   assert_contains "$(ctx_out 25 50000 200000)" "Context: 25%"
@@ -244,6 +253,16 @@ test_kfmt_below_1000_shows_raw() {
 test_kfmt_at_1000_shows_k() {
   local out; out=$( . "$SCRIPTS/agentbar/agentbar-lib.sh"; kfmt_out=; kfmt 1000 kfmt_out; printf '%s' "$kfmt_out" )
   [ "$out" = "1k" ]
+}
+
+test_kfmt_at_1000000_shows_m() {
+  local out; out=$( . "$SCRIPTS/agentbar/agentbar-lib.sh"; kfmt_out=; kfmt 6488061 kfmt_out; printf '%s' "$kfmt_out" )
+  [ "$out" = "6M" ]
+}
+
+test_kfmt_at_1000000000_shows_b() {
+  local out; out=$( . "$SCRIPTS/agentbar/agentbar-lib.sh"; kfmt_out=; kfmt 8200000000 kfmt_out; printf '%s' "$kfmt_out" )
+  [ "$out" = "8B" ]
 }
 
 test_ctx_label_shown_when_requested() {
@@ -290,6 +309,7 @@ run_tests \
   test_usage_seg_shows_each_rows_own_tokens \
   test_usage_seg_puts_tokens_before_cost \
   test_usage_seg_omits_tokens_when_absent \
+  test_usage_seg_empty_pct_omits_percent \
   test_ctx_renders_percent \
   test_ctx_gauge_zero_is_empty \
   test_ctx_gauge_full_is_filled \
@@ -298,4 +318,6 @@ run_tests \
   test_ctx_used_max_suffix_shown_when_positive \
   test_kfmt_below_1000_shows_raw \
   test_kfmt_at_1000_shows_k \
+  test_kfmt_at_1000000_shows_m \
+  test_kfmt_at_1000000000_shows_b \
   test_ctx_label_shown_when_requested
