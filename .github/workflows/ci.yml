@@ -7,6 +7,23 @@ on:
     branches: [main]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install shfmt and shellcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shfmt shellcheck
+
+      - name: Check formatting (shfmt)
+        run: shfmt -i 2 -ci -d .
+
+      - name: Lint (shellcheck)
+        run: |
+          find . -name '*.sh' -type f -print0 | xargs -0 shellcheck --severity=error
+
   test:
     runs-on: ubuntu-latest
     steps:

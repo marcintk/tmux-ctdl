@@ -11,7 +11,7 @@ SCRIPTS="$DIR/../.."
 # reads the active agent from conf, it no longer takes one as an arg.
 export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 CONF_DIR=$(mktemp -d)
-cat > "$CONF_DIR/tmux-ctdl.conf" << CONF
+cat >"$CONF_DIR/tmux-ctdl.conf" <<CONF
 CODING_AGENT="claude"
 CONF
 export TMUX_CTDL_CONF="$CONF_DIR/tmux-ctdl.conf"
@@ -33,27 +33,31 @@ _calls() { cat /tmp/mock-tmux-calls; }
 _phase() { cat "$AGENT_TMP_DIR/agent-phase-claude-test-session-@1" 2>/dev/null; }
 
 test_running_state() {
-  setup; _hook RUNNING
+  setup
+  _hook RUNNING
   assert_contains "$(_calls)" '4488ff' "running: blue color" &&
-  assert_contains "$(_calls)" '○' "running: circle icon"
+    assert_contains "$(_calls)" '○' "running: circle icon"
 }
 
 test_permission_state() {
-  setup; _hook PERMISSION
+  setup
+  _hook PERMISSION
   assert_contains "$(_calls)" 'ff5555' "permission: red color" &&
-  assert_contains "$(_calls)" '◉' "permission: filled circle icon"
+    assert_contains "$(_calls)" '◉' "permission: filled circle icon"
 }
 
 test_done_state() {
-  setup; _hook DONE
+  setup
+  _hook DONE
   assert_contains "$(_calls)" '77dd77' "done: green color" &&
-  assert_contains "$(_calls)" '●' "done: filled dot icon"
+    assert_contains "$(_calls)" '●' "done: filled dot icon"
 }
 
 test_clear_state() {
-  setup; _hook CLEAR
+  setup
+  _hook CLEAR
   assert_contains "$(_calls)" '666666' "clear: grey color" &&
-  assert_contains "$(_calls)" '◌' "clear: empty circle icon"
+    assert_contains "$(_calls)" '◌' "clear: empty circle icon"
 }
 
 # /clear while running, then done → grey, not green. The flag survives the gap
@@ -70,28 +74,33 @@ test_done_after_clear_shows_grey() {
 # …and the flag is consumed: a second done goes back to green.
 test_second_done_shows_green() {
   setup
-  _hook RUNNING; _hook CLEAR; _hook DONE
+  _hook RUNNING
+  _hook CLEAR
+  _hook DONE
   rm -f /tmp/mock-tmux-calls
   _hook DONE
   assert_contains "$(_calls)" '77dd77' "flag consumed: green again"
 }
 
 test_agent_option_name() {
-  setup; _hook PERMISSION
+  setup
+  _hook PERMISSION
   assert_contains "$(_calls)" '@agent_badges' "correct window option name"
 }
 
 # The event path stores the phase, so the poll path can hold it instead of
 # guessing from whatever is in the tmux option.
 test_event_records_phase() {
-  setup; _hook PERMISSION
+  setup
+  _hook PERMISSION
   [ "$(_phase)" = BLOCKED ]
 }
 
 test_unknown_code_is_noop() {
-  setup; _hook ZZ
+  setup
+  _hook ZZ
   assert_empty "$(_calls | grep set-window-option)" "unknown event paints nothing" &&
-  ! state_exists phase claude test-session @1
+    ! state_exists phase claude test-session @1
 }
 
 run_tests \

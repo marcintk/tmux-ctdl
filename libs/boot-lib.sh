@@ -40,12 +40,12 @@ tmux_ctdl_boot() {
     [ "$lib" = conf ] && continue
     [ -n "${_WB_LOADED[$lib]:-}" ] && continue
     case "$lib" in
-      agent)    path="${CODING_AGENT_MODULE:-$TMUX_CTDL_HOME/adapter/adapter-${CODING_AGENT}.sh}" ;;
-      agent:*)  path="$TMUX_CTDL_HOME/adapter/adapter-${lib#agent:}.sh" ;;
-      adapter)  path="$TMUX_CTDL_HOME/adapter/adapter-lib.sh" ;;
-      wintab)   path="$TMUX_CTDL_HOME/wintab/wintab-lib.sh" ;;
+      agent) path="${CODING_AGENT_MODULE:-$TMUX_CTDL_HOME/adapter/adapter-${CODING_AGENT}.sh}" ;;
+      agent:*) path="$TMUX_CTDL_HOME/adapter/adapter-${lib#agent:}.sh" ;;
+      adapter) path="$TMUX_CTDL_HOME/adapter/adapter-lib.sh" ;;
+      wintab) path="$TMUX_CTDL_HOME/wintab/wintab-lib.sh" ;;
       agentbar) path="$TMUX_CTDL_HOME/agentbar/agentbar-lib.sh" ;;
-      *)        path="$TMUX_CTDL_HOME/libs/${lib}-lib.sh" ;;
+      *) path="$TMUX_CTDL_HOME/libs/${lib}-lib.sh" ;;
     esac
     . "$path"
     _WB_LOADED[$lib]=1

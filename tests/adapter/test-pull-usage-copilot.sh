@@ -7,7 +7,10 @@ DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 . "$DIR/../../libs/state-lib.sh"
 SCRIPTS="$DIR/../.."
 
-command -v sqlite3 >/dev/null 2>&1 || { echo "skip: sqlite3 not installed"; exit 0; }
+command -v sqlite3 >/dev/null 2>&1 || {
+  echo "skip: sqlite3 not installed"
+  exit 0
+}
 
 # TMUX_CTDL_HOME points the boot module at the repo; TMUX_CTDL_CONF pins
 # CODING_AGENT=copilot regardless of the live tmux-ctdl.conf's setting.
@@ -18,7 +21,7 @@ export TMUX_CTDL_CONF="$CONF_DIR/tmux-ctdl.conf"
 # _write_conf <usage_refresh> — regenerate the scratch conf. Default 0 so a
 # pull always re-queries the db; the rate-limit test asks for a real interval.
 _write_conf() {
-  cat > "$TMUX_CTDL_CONF" << CONF
+  cat >"$TMUX_CTDL_CONF" <<CONF
 CODING_AGENT="copilot"
 USAGE_REFRESH="${1:-0}"
 CONF
@@ -60,9 +63,10 @@ test_writes_shared_from_db() {
   _make_db "$DB_DIR/db.sqlite" GPT-5 high
   COPILOT_DB="$DB_DIR/db.sqlite" bash "$SCRIPTS/tmux-ctdl.sh" agent-pull-usage
   assert_file_exists "$AGENT_TMP_DIR/agent-shared-copilot-test-session-@1" &&
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-shared-copilot-test-session-@1"
+    local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-shared-copilot-test-session-@1"
   assert_contains "${F[model]}" "GPT-5" "model written from db" &&
-  assert_contains "${F[effort]}" "high" "effort written from db"
+    assert_contains "${F[effort]}" "high" "effort written from db"
 }
 
 # copilot_collect/copilot_parse_shared called directly in-process, same real
@@ -73,9 +77,9 @@ test_collect_and_parse_shared_direct() {
   _make_db "$DB_DIR/db.sqlite" GPT-5 high
   local out
   out=$(bash -c '. "$1"; COPILOT_DB="$2" copilot_collect | copilot_parse_shared' \
-        _ "$TMUX_CTDL_HOME/adapter/adapter-copilot.sh" "$DB_DIR/db.sqlite")
+    _ "$TMUX_CTDL_HOME/adapter/adapter-copilot.sh" "$DB_DIR/db.sqlite")
   assert_contains "$out" "$(printf 'model\tGPT-5')" "model parsed directly" &&
-  assert_contains "$out" "$(printf 'effort\thigh')" "effort parsed directly"
+    assert_contains "$out" "$(printf 'effort\thigh')" "effort parsed directly"
 }
 
 # No db yet (Copilot installed, never run a session) → collect prints "{}",
@@ -101,7 +105,7 @@ test_no_cost_refresh() {
   local out
   out=$(COPILOT_DB="$DB_DIR/db.sqlite" bash "$SCRIPTS/tmux-ctdl.sh" agent-pull-usage 2>&1)
   assert_empty "$out" "no output from cost refresh" &&
-  [ -z "$(ls "$AGENT_TMP_DIR"/agent-cost-*-copilot 2>/dev/null)" ]
+    [ -z "$(ls "$AGENT_TMP_DIR"/agent-cost-*-copilot 2>/dev/null)" ]
 }
 
 # USAGE_REFRESH rate-limits the collect: a fresh `rate` file (account-wide,
@@ -110,10 +114,11 @@ test_no_cost_refresh() {
 test_rate_limit_skips_recent_pull() {
   setup 3600
   _make_db "$DB_DIR/db.sqlite" GPT-5 high
-  printf 'model\tOLD\neffort\tlow\n' > "$AGENT_TMP_DIR/agent-shared-copilot-test-session-@1"
-  : > "$AGENT_TMP_DIR/agent-rate-copilot"
+  printf 'model\tOLD\neffort\tlow\n' >"$AGENT_TMP_DIR/agent-shared-copilot-test-session-@1"
+  : >"$AGENT_TMP_DIR/agent-rate-copilot"
   COPILOT_DB="$DB_DIR/db.sqlite" bash "$SCRIPTS/tmux-ctdl.sh" agent-pull-usage
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-shared-copilot-test-session-@1"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-shared-copilot-test-session-@1"
   assert_contains "${F[model]}" "OLD" "recent write held, db not re-queried"
 }
 

@@ -3,10 +3,17 @@
 # Tests return 0 on pass, non-zero on fail. run_tests() drives output.
 
 FIXTURES="$(cd "$(dirname "${BASH_SOURCE[0]}")/fixtures" && pwd)"
-PASS=0; FAIL=0
+PASS=0
+FAIL=0
 
-ok()   { printf '\033[32m  PASS\033[0m %s\n' "$1"; (( PASS++ )); }
-fail() { printf '\033[31m  FAIL\033[0m %s\n' "$1"; (( FAIL++ )); }
+ok() {
+  printf '\033[32m  PASS\033[0m %s\n' "$1"
+  ((PASS++))
+}
+fail() {
+  printf '\033[31m  FAIL\033[0m %s\n' "$1"
+  ((FAIL++))
+}
 
 assert_contains() {
   local haystack=$1 needle=$2 msg=${3:-"contains '$needle'"}

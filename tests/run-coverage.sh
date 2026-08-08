@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run the test suite under kcov and print per-file line coverage.
 # --html: also open the full HTML report.
-cd "$(dirname "$0")/.." || exit 1   # workspace
+cd "$(dirname "$0")/.." || exit 1 # workspace
 
 HTML=0
 [ "$1" = "--html" ] && HTML=1

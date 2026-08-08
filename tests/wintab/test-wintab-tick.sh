@@ -18,10 +18,10 @@ trap 'rm -rf "$TEST_HOME" "$AGENT_TMP_DIR"' EXIT
 
 _make_workspace() {
   # Stub agent module with injectable live_cwds (MOCK_LIVE_PPATH is env-injectable)
-  cat > "$TEST_HOME/adapter-claude.sh" << 'AGENT'
+  cat >"$TEST_HOME/adapter-claude.sh" <<'AGENT'
 claude_live_cwds() { printf '%s\n' "${MOCK_LIVE_PPATH:-}"; }
 AGENT
-  cat > "$TEST_HOME/tmux-ctdl.conf" << CONF
+  cat >"$TEST_HOME/tmux-ctdl.conf" <<CONF
 CODING_AGENT="claude"
 CODING_AGENT_MODULE="$TEST_HOME/adapter-claude.sh"
 WINTAB_LIVE_GRACE=5
@@ -42,8 +42,8 @@ setup() {
   unset MOCK_LIVE_PPATH MOCK_PPATH2 MOCK_BADGE
 }
 
-_seed()  { state_put "$1" phase claude test-session @1; }
-_tick()  { bash "$SCRIPTS/tmux-ctdl.sh" wintab-tick test-session; }
+_seed() { state_put "$1" phase claude test-session @1; }
+_tick() { bash "$SCRIPTS/tmux-ctdl.sh" wintab-tick test-session; }
 _calls() { cat /tmp/mock-tmux-calls; }
 _phase() { state_get phase claude test-session @1; }
 
@@ -55,15 +55,17 @@ test_no_session_exits_silently() {
 test_live_process_sets_pulse() {
   setup
   export MOCK_LIVE_PPATH=/home/user/project
-  _seed RUNNING; _tick
+  _seed RUNNING
+  _tick
   assert_contains "$(_calls)" '@agent_badges' "sets agent_badges option" &&
-  assert_contains "$(_calls)" '4488ff' "pulse is blue"
+    assert_contains "$(_calls)" '4488ff' "pulse is blue"
 }
 
 test_dead_process_clears_badge() {
   setup
   # Not live and no recent liveness stamp (agent truly gone) → run badge cleared.
-  _seed RUNNING; _tick
+  _seed RUNNING
+  _tick
   _last_badge_cleared "$(_calls)" && ! state_exists phase claude test-session @1
 }
 
@@ -72,7 +74,7 @@ test_dead_process_clears_badge() {
 test_transient_miss_keeps_run_badge() {
   setup
   _seed RUNNING
-  state_mark live claude test-session @1   # seen live this grace window
+  state_mark live claude test-session @1 # seen live this grace window
   _tick
   ! _last_badge_cleared "$(_calls)"
 }
@@ -95,7 +97,8 @@ test_live_no_phase_sets_grey() {
 
 test_dead_stale_badge_cleared() {
   setup
-  _seed DONE; _tick
+  _seed DONE
+  _tick
   _last_badge_cleared "$(_calls)"
 }
 
@@ -104,7 +107,8 @@ test_dead_stale_badge_cleared() {
 test_live_blocked_badge_survives_poll() {
   setup
   export MOCK_LIVE_PPATH=/home/user/project
-  _seed BLOCKED; _tick
+  _seed BLOCKED
+  _tick
   [ "$(_phase)" = BLOCKED ] && ! _last_badge_cleared "$(_calls)"
 }
 
@@ -112,10 +116,11 @@ test_live_blocked_badge_survives_poll() {
 # same window has been cd'd elsewhere. The window is still live.
 test_agent_pane_matches_when_active_pane_wandered() {
   setup
-  export MOCK_PPATH=/home/user/somewhere-else   # active pane, cd'd away
-  export MOCK_PPATH2=/home/user/project         # agent's pane
+  export MOCK_PPATH=/home/user/somewhere-else # active pane, cd'd away
+  export MOCK_PPATH2=/home/user/project       # agent's pane
   export MOCK_LIVE_PPATH=/home/user/project
-  _seed RUNNING; _tick
+  _seed RUNNING
+  _tick
   [ "$(_phase)" = RUNNING ] && ! _last_badge_cleared "$(_calls)"
 }
 

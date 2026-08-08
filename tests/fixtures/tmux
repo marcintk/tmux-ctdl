@@ -16,7 +16,7 @@
 #   MOCK_NEW_SESSION_PANE — pane_id printed by new-session -d (default: %8)
 # All calls are logged to /tmp/mock-tmux-calls (appended).
 
-printf 'tmux %s\n' "$*" >> /tmp/mock-tmux-calls
+printf 'tmux %s\n' "$*" >>/tmp/mock-tmux-calls
 
 case "$1" in
   display-message)
@@ -24,14 +24,16 @@ case "$1" in
     fmt="${*: -1}"
     case "$fmt" in
       *session_name*window_id*) printf '%s\t%s\n' "${MOCK_SESSION:-test-session}" "${MOCK_WIN:-@1}" ;;
-      *pane_current_path*)      printf '%s\n' "${MOCK_PPATH:-/home/user/project}" ;;
-      *session_name*)           printf '%s\n' "${MOCK_SESSION:-test-session}" ;;
-      *window_id*)              printf '%s\n' "${MOCK_WIN:-@1}" ;;
-      *)                        printf '%s\n' "${MOCK_SESSION:-test-session}" ;;
+      *pane_current_path*) printf '%s\n' "${MOCK_PPATH:-/home/user/project}" ;;
+      *session_name*) printf '%s\n' "${MOCK_SESSION:-test-session}" ;;
+      *window_id*) printf '%s\n' "${MOCK_WIN:-@1}" ;;
+      *) printf '%s\n' "${MOCK_SESSION:-test-session}" ;;
     esac
     ;;
   show-window-option)
-    opt="${*: -1}"; opt="${opt#@}"; opt="${opt//-/_}"
+    opt="${*: -1}"
+    opt="${opt#@}"
+    opt="${opt//-/_}"
     var="MOCK_OPT_${opt}"
     printf '%s\n' "${!var:-${MOCK_BADGE:-}}"
     ;;
@@ -51,7 +53,7 @@ case "$1" in
     printf '%s\t%s\n' "${MOCK_WIN:-@1}" "${MOCK_PPATH:-/home/user/project}"
     [ -n "${MOCK_PPATH2:-}" ] && printf '%s\t%s\n' "${MOCK_WIN:-@1}" "$MOCK_PPATH2"
     ;;
-  set-window-option|respawn-pane|rename-session|kill-window)
+  set-window-option | respawn-pane | rename-session | kill-window)
     # Already logged above; exit 0
     ;;
 esac

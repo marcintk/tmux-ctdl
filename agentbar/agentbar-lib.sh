@@ -22,11 +22,16 @@ AGENT_SEP='#[fg=brightblack] ‖ #[default]'
 # thresholds. Pure (no globals, no clock).
 _tier_of() {
   local pct=$1 critical=$2 warn=$3 notice=$4 floor=$5
-  if   [ "$pct" -ge "$critical" ]; then printf 'CRITICAL'
-  elif [ "$pct" -ge "$warn"     ]; then printf 'WARN'
-  elif [ "$pct" -ge "$notice"   ]; then printf 'NOTICE'
-  elif [ "$pct" -ge "$floor"    ]; then printf 'SAFE'
-  else                                  printf 'DIM'
+  if [ "$pct" -ge "$critical" ]; then
+    printf 'CRITICAL'
+  elif [ "$pct" -ge "$warn" ]; then
+    printf 'WARN'
+  elif [ "$pct" -ge "$notice" ]; then
+    printf 'NOTICE'
+  elif [ "$pct" -ge "$floor" ]; then
+    printf 'SAFE'
+  else
+    printf 'DIM'
   fi
 }
 
@@ -37,8 +42,8 @@ _tier_of() {
 # colouring, a context window at 5% is.
 _ladder_tier() {
   case "$1" in
-    RATE) _tier_of "$2" "${THRESHOLD_CRITICAL:-90}"     "${THRESHOLD_WARN:-75}"     "${THRESHOLD_NOTICE:-50}"     "${THRESHOLD_FLOOR:-10}" ;;
-    CTX)  _tier_of "$2" "${THRESHOLD_CTX_CRITICAL:-80}" "${THRESHOLD_CTX_WARN:-65}" "${THRESHOLD_CTX_NOTICE:-40}" "${THRESHOLD_CTX_FLOOR:-1}" ;;
+    RATE) _tier_of "$2" "${THRESHOLD_CRITICAL:-90}" "${THRESHOLD_WARN:-75}" "${THRESHOLD_NOTICE:-50}" "${THRESHOLD_FLOOR:-10}" ;;
+    CTX) _tier_of "$2" "${THRESHOLD_CTX_CRITICAL:-80}" "${THRESHOLD_CTX_WARN:-65}" "${THRESHOLD_CTX_NOTICE:-40}" "${THRESHOLD_CTX_FLOOR:-1}" ;;
   esac
 }
 
@@ -47,10 +52,10 @@ _ladder_tier() {
 _tier_colors() {
   case "$1" in
     CRITICAL) printf '%s\t%s' "${COLOR_CRITICAL_BG:-#8b0000}" "${COLOR_CRITICAL_FG:-#ffffff}" ;;
-    WARN)     printf '%s\t%s' "${COLOR_WARN_BG:-#7a1a1a}"     "${COLOR_WARN_FG:-#ff8c42}" ;;
-    NOTICE)   printf '%s\t%s' "${COLOR_NOTICE_BG:-#3d2200}"   "${COLOR_NOTICE_FG:-#ffb347}" ;;
-    SAFE)     printf '%s\t%s' "${COLOR_SAFE_BG:-#1a3320}"     "${COLOR_SAFE_FG:-#77dd77}" ;;
-    *)        printf '%s\t%s' "${COLOR_DIM_BG:-#333333}"      "${COLOR_DIM_FG:-#aaaaaa}" ;;
+    WARN) printf '%s\t%s' "${COLOR_WARN_BG:-#7a1a1a}" "${COLOR_WARN_FG:-#ff8c42}" ;;
+    NOTICE) printf '%s\t%s' "${COLOR_NOTICE_BG:-#3d2200}" "${COLOR_NOTICE_FG:-#ffb347}" ;;
+    SAFE) printf '%s\t%s' "${COLOR_SAFE_BG:-#1a3320}" "${COLOR_SAFE_FG:-#77dd77}" ;;
+    *) printf '%s\t%s' "${COLOR_DIM_BG:-#333333}" "${COLOR_DIM_FG:-#aaaaaa}" ;;
   esac
 }
 
@@ -60,10 +65,11 @@ _tier_colors() {
 _emphasis_of() {
   local tier=$1 blink=${2:-0}
   case "$tier" in
-    CRITICAL|WARN)
-      [ "$blink" -eq 1 ] && printf 'ALARM_ON' || printf 'ALARM_OFF' ;;
+    CRITICAL | WARN)
+      [ "$blink" -eq 1 ] && printf 'ALARM_ON' || printf 'ALARM_OFF'
+      ;;
     NOTICE) printf 'BOLD' ;;
-    *)      printf 'PLAIN' ;;
+    *) printf 'PLAIN' ;;
   esac
 }
 
@@ -77,9 +83,9 @@ paint() {
   local map=$1 pct=$2 blink=${3:-0} tier bg fg emph
   case "$map" in
     PILL) tier=$(_ladder_tier RATE "$pct") ;;
-    *)    tier=$(_ladder_tier CTX  "$pct") ;;
+    *) tier=$(_ladder_tier CTX "$pct") ;;
   esac
-  IFS=$'\t' read -r bg fg <<< "$(_tier_colors "$tier")"
+  IFS=$'\t' read -r bg fg <<<"$(_tier_colors "$tier")"
   emph=$(_emphasis_of "$tier" "$blink")
 
   # Each outer arm keeps its inner case's opener and closer on the arm's own
@@ -87,19 +93,19 @@ paint() {
   # kcov's line-based bash tracer can credit them — see coverage/README notes.
   case "$map" in
     PILL) case "$emph" in
-        ALARM_ON)  printf '#[bg=%s,fg=%s,bold]' "$bg" "$fg" ;;
-        ALARM_OFF) printf '#[bg=default,fg=%s,bold]' "$fg" ;;
-        BOLD)      printf '#[bg=%s,fg=%s,bold]' "$bg" "$fg" ;;
-        PLAIN)     printf '#[bg=%s,fg=%s]'      "$bg" "$fg" ;; esac ;;
+      ALARM_ON) printf '#[bg=%s,fg=%s,bold]' "$bg" "$fg" ;;
+      ALARM_OFF) printf '#[bg=default,fg=%s,bold]' "$fg" ;;
+      BOLD) printf '#[bg=%s,fg=%s,bold]' "$bg" "$fg" ;;
+      PLAIN) printf '#[bg=%s,fg=%s]' "$bg" "$fg" ;; esac ;;
     CTX_TEXT) case "$emph" in
-        ALARM_ON)  printf '#[fg=%s,bold]' "$fg" ;;
-        ALARM_OFF) printf '#[fg=%s,bold]' "${COLOR_DIM_FG:-#aaaaaa}" ;;
-        BOLD)      printf '#[fg=%s,bold]' "$fg" ;;
-        PLAIN)     printf '#[fg=%s]'      "$fg" ;; esac ;;
+      ALARM_ON) printf '#[fg=%s,bold]' "$fg" ;;
+      ALARM_OFF) printf '#[fg=%s,bold]' "${COLOR_DIM_FG:-#aaaaaa}" ;;
+      BOLD) printf '#[fg=%s,bold]' "$fg" ;;
+      PLAIN) printf '#[fg=%s]' "$fg" ;; esac ;;
     CTX_BAR) case "$emph" in
-        ALARM_ON)  printf '#[bg=%s,fg=white]' "$bg" ;;
-        ALARM_OFF) printf '#[bg=default,fg=%s]' "$fg" ;;
-        *)         printf '#[fg=%s]' "$fg" ;; esac ;;
+      ALARM_ON) printf '#[bg=%s,fg=white]' "$bg" ;;
+      ALARM_OFF) printf '#[bg=default,fg=%s]' "$fg" ;;
+      *) printf '#[fg=%s]' "$fg" ;; esac ;;
   esac
 }
 
@@ -130,14 +136,14 @@ paint_usage() {
     # Tokens sit before cost: the count is what the dollars are derived from.
     [ -n "$tokens" ] && seg+=" #[fg=brightblack]${tokens}#[default]"
     # A cost cache can hold junk (a failed ccusage run) — show nothing, not $0.00.
-    case "$cost" in ''|*[!0-9.]*) cost="" ;; esac
+    case "$cost" in '' | *[!0-9.]*) cost="" ;; esac
     if [ -n "$cost" ]; then
       printf -v cfmt '%.2f' "$cost"
       seg+=" #[fg=brightblack]\$${cfmt}#[default]"
     fi
     [ -n "$suffix" ] && [ "$suffix" != "-" ] && seg+=" #[fg=brightblack]${suffix}#[default]"
     out="${out:+${out}${SEP}}${seg}"
-  done <<< "$rows"
+  done <<<"$rows"
 
   printf '%s' "$out"
 }
@@ -148,12 +154,18 @@ paint_usage() {
 # usage pill of the same tier can never drift apart.
 model_style() {
   local model="${1,,}" tok tier=DIM
-  for tok in ${SAFE_MODELS:-haiku luna}; do [[ "$model" == *"$tok"* ]] && { tier=SAFE; break; }; done
+  for tok in ${SAFE_MODELS:-haiku luna}; do [[ "$model" == *"$tok"* ]] && {
+    tier=SAFE
+    break
+  }; done
   if [ "$tier" = DIM ]; then
-    for tok in ${WARN_MODELS:-opus fable sol}; do [[ "$model" == *"$tok"* ]] && { tier=WARN; break; }; done
+    for tok in ${WARN_MODELS:-opus fable sol}; do [[ "$model" == *"$tok"* ]] && {
+      tier=WARN
+      break
+    }; done
   fi
   local bg fg
-  IFS=$'\t' read -r bg fg <<< "$(_tier_colors "$tier")"
+  IFS=$'\t' read -r bg fg <<<"$(_tier_colors "$tier")"
   printf '#[bg=%s,fg=%s]' "$bg" "$fg"
 }
 
@@ -162,9 +174,12 @@ model_style() {
 # shape never shifts once real numbers land.
 _ctx_kfmt() {
   local v=${1:-0}
-  if   (( v >= 1000000000 )); then printf -v "$2" '%dB' "$(( v / 1000000000 ))"
-  elif (( v >= 1000000 ));    then printf -v "$2" '%dM' "$(( v / 1000000 ))"
-  else                             printf -v "$2" '%dk' "$(( v / 1000 ))"
+  if ((v >= 1000000000)); then
+    printf -v "$2" '%dB' "$((v / 1000000000))"
+  elif ((v >= 1000000)); then
+    printf -v "$2" '%dM' "$((v / 1000000))"
+  else
+    printf -v "$2" '%dk' "$((v / 1000))"
   fi
 }
 
@@ -178,20 +193,20 @@ render_ctx() {
   local CTX="${_rc_C[ctx]:-0}" CTX_USED="${_rc_C[ctx_used]:-0}" CTX_MAX="${_rc_C[ctx_max]:-0}"
 
   local _pct="${CTX%%.*}" PCT CTX_TEXT_STYLE CTX_BAR_STYLE CTX_TOKENS BAR FILLED
-  PCT=$(( ${_pct:-0} ))
+  PCT=$((${_pct:-0}))
   CTX_TEXT_STYLE=$(paint CTX_TEXT "$PCT" "$blink")
-  CTX_BAR_STYLE=$(paint CTX_BAR  "$PCT" "$blink")
+  CTX_BAR_STYLE=$(paint CTX_BAR "$PCT" "$blink")
   # A fresh session reports 0/0 — still show the gauge (0k/<default>k) rather
   # than a blank, so the segment doesn't change shape once the first turn lands.
   local _used=0 _max=0
-  case "$CTX_USED" in ''|*[!0-9]*) ;; *) _used=$CTX_USED ;; esac
-  case "$CTX_MAX"  in ''|*[!0-9]*) ;; *) _max=$CTX_MAX ;; esac
+  case "$CTX_USED" in '' | *[!0-9]*) ;; *) _used=$CTX_USED ;; esac
+  case "$CTX_MAX" in '' | *[!0-9]*) ;; *) _max=$CTX_MAX ;; esac
   [ "$_max" -gt 0 ] || _max=${CTX_MAX_DEFAULT:-100000}
   local _used_fmt _max_fmt
   _ctx_kfmt "$_used" _used_fmt
-  _ctx_kfmt "$_max"  _max_fmt
+  _ctx_kfmt "$_max" _max_fmt
   CTX_TOKENS=" #[fg=brightblack]${_used_fmt}/${_max_fmt}#[default]"
-  FILLED=$(( PCT * 20 / 100 ))
+  FILLED=$((PCT * 20 / 100))
   BAR=$(awk -v n="$FILLED" 'BEGIN{for(i=1;i<=n;i++) printf "▓"; for(i=n+1;i<=20;i++) printf "░"}')
 
   local prefix=""
@@ -238,6 +253,6 @@ render_agent() {
 # frame from <now> so nothing downstream needs the wall clock as a global.
 agentbar_render() {
   local agent=$1 tsess=$2 win=$3 now=$4 blink
-  blink=$(( now % 2 ))
+  blink=$((now % 2))
   render_agent "$agent" "$tsess" "$win" "$blink" "$now"
 }

@@ -59,7 +59,8 @@ test_age_missing_is_huge() {
 test_age_counts_from_mtime() {
   setup
   state_mark live claude sess @1
-  local now; now=$(date +%s)
+  local now
+  now=$(date +%s)
   [ "$(state_age "$now" live claude sess @1)" -le 1 ]
 }
 
@@ -69,7 +70,7 @@ test_put_overwrites() {
   state_put RUNNING phase claude sess @1
   state_put IDLE phase claude sess @1
   [ "$(state_get phase claude sess @1)" = IDLE ] &&
-  [ -z "$(ls "$AGENT_TMP_DIR"/*.tmp.* 2>/dev/null)" ]
+    [ -z "$(ls "$AGENT_TMP_DIR"/*.tmp.* 2>/dev/null)" ]
 }
 
 test_agent_tmp_respects_env() { [ "$(_agent_tmp)" = "$AGENT_TMP_DIR" ]; }
@@ -81,19 +82,19 @@ test_per_slot_kind_needs_no_padding() {
   setup
   state_put 4.20 cost claude weekly
   [ "$(state_get cost claude weekly)" = "4.20" ] &&
-  [ "$(state_age "$(date +%s)" cost claude weekly)" -le 1 ]
+    [ "$(state_age "$(date +%s)" cost claude weekly)" -le 1 ]
 }
 
 test_per_agent_kind_needs_no_padding() {
   setup
   state_put LINE shared claude
   [ "$(state_get shared claude)" = "LINE" ] &&
-  [ "$(state_age "$(date +%s)" shared claude)" -le 1 ]
+    [ "$(state_age "$(date +%s)" shared claude)" -le 1 ]
 }
 
 test_kv_fill_reads_pairs() {
   local -A F
-  kv_fill F <<< "$(printf 'session\t12.5\nmodel\tSonnet\n')"
+  kv_fill F <<<"$(printf 'session\t12.5\nmodel\tSonnet\n')"
   [ "${F[session]}" = "12.5" ] && [ "${F[model]}" = "Sonnet" ]
 }
 
@@ -113,11 +114,11 @@ test_state_get_kv_missing_returns_1() {
 }
 
 # ── Layout: the names the live status files already use ──────────────────────
-test_layout_shared()  { [ "$(_state_path shared faketest session-1 @42)" = "$AGENT_TMP_DIR/agent-shared-faketest-session-1-@42" ]; }
-test_layout_ctx()     { [ "$(_state_path ctx faketest session-1 @42)"   = "$AGENT_TMP_DIR/agent-ctx-faketest-session-1-@42" ]; }
-test_layout_phase()   { [ "$(_state_path phase faketest sess @5)"       = "$AGENT_TMP_DIR/agent-phase-faketest-sess-@5" ]; }
-test_layout_cost()    { [ "$(_state_path cost faketest WEEKLY)"         = "$AGENT_TMP_DIR/agent-cost-weekly-faketest" ]; }
-test_layout_ctx_defaults() { [ "$(_state_path ctx faketest)"            = "$AGENT_TMP_DIR/agent-ctx-faketest-_-0" ]; }
+test_layout_shared() { [ "$(_state_path shared faketest session-1 @42)" = "$AGENT_TMP_DIR/agent-shared-faketest-session-1-@42" ]; }
+test_layout_ctx() { [ "$(_state_path ctx faketest session-1 @42)" = "$AGENT_TMP_DIR/agent-ctx-faketest-session-1-@42" ]; }
+test_layout_phase() { [ "$(_state_path phase faketest sess @5)" = "$AGENT_TMP_DIR/agent-phase-faketest-sess-@5" ]; }
+test_layout_cost() { [ "$(_state_path cost faketest WEEKLY)" = "$AGENT_TMP_DIR/agent-cost-weekly-faketest" ]; }
+test_layout_ctx_defaults() { [ "$(_state_path ctx faketest)" = "$AGENT_TMP_DIR/agent-ctx-faketest-_-0" ]; }
 
 run_tests \
   test_put_get_roundtrip \

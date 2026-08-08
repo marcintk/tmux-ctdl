@@ -35,10 +35,11 @@ test_write_shared_layout() {
   export TMUX_PANE=mock-pane
   write_shared faketest "$(printf 'session\t12.5\nmodel\tSonnet\neffort\thigh')"
   assert_file_exists "$AGENT_TMP_DIR/agent-shared-faketest-test-session-@1" &&
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-shared-faketest-test-session-@1"
+    local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-shared-faketest-test-session-@1"
   assert_contains "${F[session]}" "12.5" "session field" &&
-  assert_contains "${F[model]}" "Sonnet" "model field" &&
-  assert_contains "${F[effort]}" "high" "effort field"
+    assert_contains "${F[model]}" "Sonnet" "model field" &&
+    assert_contains "${F[effort]}" "high" "effort field"
 }
 
 # write_rate is the one with the incoming_stale hook (account-wide, no
@@ -46,9 +47,10 @@ test_write_shared_layout() {
 test_write_rate_stale_hook_skips() {
   setup
   faketest_incoming_stale() { return 0; }
-  printf 'session\tOLD\n' > "$AGENT_TMP_DIR/agent-rate-faketest"
+  printf 'session\tOLD\n' >"$AGENT_TMP_DIR/agent-rate-faketest"
   write_rate faketest "$(printf 'session\tNEW\n')"
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-rate-faketest"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
   unset -f faketest_incoming_stale
   assert_contains "${F[session]}" "OLD" "stale hook prevented overwrite"
 }
@@ -57,7 +59,8 @@ test_write_rate_stale_hook_skips() {
 test_write_rate_no_hook_writes_normally() {
   setup
   write_rate faketest "$(printf 'session\tNEW\n')"
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-rate-faketest"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
   assert_contains "${F[session]}" "NEW" "no hook → state written"
 }
 
@@ -81,10 +84,11 @@ test_write_ctx_writes_file() {
   export TMUX_PANE=mock-pane
   write_ctx faketest "$(printf 'ctx\t25\n')" Sonnet normal
   assert_file_exists "$AGENT_TMP_DIR/agent-ctx-faketest-test-session-@1" &&
-  local -A C; kv_fill C < "$AGENT_TMP_DIR/agent-ctx-faketest-test-session-@1"
+    local -A C
+  kv_fill C <"$AGENT_TMP_DIR/agent-ctx-faketest-test-session-@1"
   assert_contains "${C[ctx]}" "25" "ctx% written" &&
-  assert_contains "${C[model]}" "Sonnet" "model appended" &&
-  assert_contains "${C[effort]}" "normal" "effort appended"
+    assert_contains "${C[model]}" "Sonnet" "model appended" &&
+    assert_contains "${C[effort]}" "normal" "effort appended"
 }
 
 # A pane that tmux can't resolve is "nowhere" too — write nothing rather than a
@@ -102,14 +106,16 @@ test_write_ctx_unresolvable_pane_skips() {
 test_adapter_main_writes_from_parsers() {
   setup
   export TMUX_PANE=mock-pane
-  faketest_parse_shared()  { printf 'session\t33.3\nmodel\tOpus\neffort\thigh\n'; }
+  faketest_parse_shared() { printf 'session\t33.3\nmodel\tOpus\neffort\thigh\n'; }
   faketest_parse_context() { :; }
   adapter_main faketest </dev/null
   unset -f faketest_parse_shared faketest_parse_context
   assert_file_exists "$AGENT_TMP_DIR/agent-rate-faketest" &&
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-rate-faketest"
+    local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
   assert_contains "${F[session]}" "33.3" "adapter_main wrote usage" &&
-  local -A S; kv_fill S < "$AGENT_TMP_DIR/agent-shared-faketest-test-session-@1"
+    local -A S
+  kv_fill S <"$AGENT_TMP_DIR/agent-shared-faketest-test-session-@1"
   assert_contains "${S[model]}" "Opus" "adapter_main wrote model per-window"
 }
 
@@ -118,18 +124,19 @@ test_kv_fill_roundtrip() {
   setup
   export TMUX_PANE=mock-pane
   write_shared faketest "$(printf 'session\t12.5\nweekly\t20.1\nmodel\tSonnet\neffort\thigh\n')"
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-shared-faketest-test-session-@1"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-shared-faketest-test-session-@1"
   [ "${F[session]}" = "12.5" ] && [ "${F[weekly]}" = "20.1" ] &&
-  [ "${F[model]}" = "Sonnet" ] && [ "${F[effort]}" = "high" ]
+    [ "${F[model]}" = "Sonnet" ] && [ "${F[effort]}" = "high" ]
 }
 
 # adapter_main calls <agent>_refresh_costs when the agent defines it.
 test_adapter_main_calls_refresh_hook() {
   setup
   unset TMUX_PANE
-  faketest_parse_shared()  { printf 'session\t1\n'; }
+  faketest_parse_shared() { printf 'session\t1\n'; }
   faketest_parse_context() { :; }
-  faketest_refresh_costs() { : > "$AGENT_TMP_DIR/refreshed"; }
+  faketest_refresh_costs() { : >"$AGENT_TMP_DIR/refreshed"; }
   adapter_main faketest </dev/null
   unset -f faketest_parse_shared faketest_parse_context faketest_refresh_costs
   assert_file_exists "$AGENT_TMP_DIR/refreshed"
@@ -139,9 +146,10 @@ test_adapter_main_calls_refresh_hook() {
 test_adapter_main_without_refresh_hook_is_silent() {
   setup
   unset TMUX_PANE
-  faketest_parse_shared()  { printf 'session\t1\n'; }
+  faketest_parse_shared() { printf 'session\t1\n'; }
   faketest_parse_context() { :; }
-  local out; out=$(adapter_main faketest </dev/null 2>&1)
+  local out
+  out=$(adapter_main faketest </dev/null 2>&1)
   local rc=$?
   unset -f faketest_parse_shared faketest_parse_context
   assert_empty "$out" "no cost hook → nothing said" && [ "$rc" -eq 0 ]
@@ -151,19 +159,19 @@ test_adapter_main_without_refresh_hook_is_silent() {
 # with or without an explicit unit.
 test_usage_refresh_secs_units() {
   [ "$(USAGE_REFRESH=90 usage_refresh_secs)" = 90 ] &&
-  [ "$(USAGE_REFRESH=30s usage_refresh_secs)" = 30 ] &&
-  [ "$(USAGE_REFRESH=1m usage_refresh_secs)" = 60 ] &&
-  [ "$(USAGE_REFRESH=2h usage_refresh_secs)" = 7200 ]
+    [ "$(USAGE_REFRESH=30s usage_refresh_secs)" = 30 ] &&
+    [ "$(USAGE_REFRESH=1m usage_refresh_secs)" = 60 ] &&
+    [ "$(USAGE_REFRESH=2h usage_refresh_secs)" = 7200 ]
 }
 
 # since/until_at — one ladder, two directions. Asserted directly rather than
 # through a rendered row: the clock is an argument, so both the countdown and
 # the already-reached case are reachable without waiting for one.
-test_since_seconds_rung()     { [ "$(since 42)"    = "42s ago" ]; }
-test_since_minutes_rung()     { [ "$(since 2520)"  = "42m ago" ]; }
+test_since_seconds_rung() { [ "$(since 42)" = "42s ago" ]; }
+test_since_minutes_rung() { [ "$(since 2520)" = "42m ago" ]; }
 test_since_hours_keep_decimal() { [ "$(since 11520)" = "3.2h ago" ]; }
 
-test_until_at_minutes_rung()  { [ "$(until_at 1700002520 1700000000)" = "in 42m" ]; }
+test_until_at_minutes_rung() { [ "$(until_at 1700002520 1700000000)" = "in 42m" ]; }
 test_until_at_hours_keep_decimal() { [ "$(until_at 1700005400 1700000000)" = "in 1.5h" ]; }
 
 # Under a minute the countdown counts seconds — it used to floor to "in 0m",
@@ -173,8 +181,8 @@ test_until_at_final_minute_counts_seconds() {
 }
 
 # A target already reached reads "now", not a countdown past zero.
-test_until_at_reached_reads_now()  { [ "$(until_at 1700000000 1700000000)" = "now" ]; }
-test_until_at_overdue_reads_now()  { [ "$(until_at 1699999000 1700000000)" = "now" ]; }
+test_until_at_reached_reads_now() { [ "$(until_at 1700000000 1700000000)" = "now" ]; }
+test_until_at_overdue_reads_now() { [ "$(until_at 1699999000 1700000000)" = "now" ]; }
 
 test_get_agent_usage_fills_vars() {
   setup
@@ -217,11 +225,12 @@ test_get_agent_context_missing_returns_1() {
 test_push_usage_reads_stdin() {
   setup
   export TMUX_PANE=mock-pane
-  faketest_parse_shared()  { printf 'session\t%s\n' "$(cat)"; }
+  faketest_parse_shared() { printf 'session\t%s\n' "$(cat)"; }
   faketest_parse_context() { :; }
-  adapter_push_usage faketest <<< "77.7"
+  adapter_push_usage faketest <<<"77.7"
   unset -f faketest_parse_shared faketest_parse_context
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-rate-faketest"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
   assert_contains "${F[session]}" "77.7" "push parsed the stdin payload"
 }
 
@@ -230,20 +239,22 @@ test_push_usage_reads_stdin() {
 test_pull_usage_without_collect_is_noop() {
   setup
   export TMUX_PANE=mock-pane
-  local out; out=$(adapter_pull_usage faketest "$(date +%s)" 2>&1)
+  local out
+  out=$(adapter_pull_usage faketest "$(date +%s)" 2>&1)
   assert_empty "$out" "no collect hook → nothing said" &&
-  [ ! -f "$AGENT_TMP_DIR/agent-shared-faketest-test-session-@1" ]
+    [ ! -f "$AGENT_TMP_DIR/agent-shared-faketest-test-session-@1" ]
 }
 
 test_pull_usage_collects_and_writes() {
   setup
   export TMUX_PANE=mock-pane
-  faketest_collect()       { printf '41.5'; }
-  faketest_parse_shared()  { printf 'session\t%s\n' "$(cat)"; }
+  faketest_collect() { printf '41.5'; }
+  faketest_parse_shared() { printf 'session\t%s\n' "$(cat)"; }
   faketest_parse_context() { :; }
   USAGE_REFRESH=0 adapter_pull_usage faketest "$(date +%s)"
   unset -f faketest_collect faketest_parse_shared faketest_parse_context
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-rate-faketest"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
   assert_contains "${F[session]}" "41.5" "pull wrote what collect printed"
 }
 
@@ -253,15 +264,19 @@ test_pull_usage_collects_and_writes() {
 test_pull_usage_rate_limit_skips_collect() {
   setup
   export TMUX_PANE=mock-pane
-  printf 'session\tOLD\n' > "$AGENT_TMP_DIR/agent-rate-faketest"
-  faketest_collect()      { : > "$AGENT_TMP_DIR/collected"; printf 'NEW'; }
+  printf 'session\tOLD\n' >"$AGENT_TMP_DIR/agent-rate-faketest"
+  faketest_collect() {
+    : >"$AGENT_TMP_DIR/collected"
+    printf 'NEW'
+  }
   faketest_parse_shared() { printf 'session\t%s\n' "$(cat)"; }
-  faketest_parse_context(){ :; }
+  faketest_parse_context() { :; }
   USAGE_REFRESH=1h adapter_pull_usage faketest "$(date +%s)"
   unset -f faketest_collect faketest_parse_shared faketest_parse_context
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-rate-faketest"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
   assert_contains "${F[session]}" "OLD" "fresh state held" &&
-  [ ! -f "$AGENT_TMP_DIR/collected" ]
+    [ ! -f "$AGENT_TMP_DIR/collected" ]
 }
 
 # Same state, a <now> an hour in the future: the interval has elapsed, so the
@@ -269,13 +284,14 @@ test_pull_usage_rate_limit_skips_collect() {
 test_pull_usage_refreshes_once_interval_elapsed() {
   setup
   export TMUX_PANE=mock-pane
-  printf 'session\tOLD\n' > "$AGENT_TMP_DIR/agent-rate-faketest"
-  faketest_collect()      { printf 'NEW'; }
+  printf 'session\tOLD\n' >"$AGENT_TMP_DIR/agent-rate-faketest"
+  faketest_collect() { printf 'NEW'; }
   faketest_parse_shared() { printf 'session\t%s\n' "$(cat)"; }
-  faketest_parse_context(){ :; }
-  USAGE_REFRESH=1m adapter_pull_usage faketest "$(( $(date +%s) + 3600 ))"
+  faketest_parse_context() { :; }
+  USAGE_REFRESH=1m adapter_pull_usage faketest "$(($(date +%s) + 3600))"
   unset -f faketest_collect faketest_parse_shared faketest_parse_context
-  local -A F; kv_fill F < "$AGENT_TMP_DIR/agent-rate-faketest"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
   assert_contains "${F[session]}" "NEW" "stale state re-collected"
 }
 

@@ -39,7 +39,7 @@ claude_parse_shared() {
 claude_incoming_stale() {
   local agent=$1 incoming=$2
   local -A NEW OLD
-  kv_fill NEW <<< "$incoming"
+  kv_fill NEW <<<"$incoming"
   state_get_kv OLD rate "$agent"
   local new_five="${NEW[five_reset]:-}"
   local old_five="${OLD[five_reset]:-9999999999}"
@@ -76,7 +76,7 @@ claude_live_cwds() {
   local sessions_dir="${1:-$HOME/.claude/sessions}"
   for f in "$sessions_dir"/*.json; do
     [ -f "$f" ] || continue
-    IFS=$'\t' read -r pid cwd <<< "$(claude_parse_session "$f")"
+    IFS=$'\t' read -r pid cwd <<<"$(claude_parse_session "$f")"
     [ -z "$pid" ] || [ -z "$cwd" ] && continue
     kill -0 "$pid" 2>/dev/null && printf '%s\n' "$cwd"
   done
@@ -86,9 +86,17 @@ claude_live_cwds() {
 # read, empty (not "0") when the cache holds nothing usable yet.
 _fmt_tokens() {
   local raw=$1
-  case "$raw" in '' | *[!0-9]*) printf -v "$2" ''; return 0 ;; esac
-  [ "$raw" -gt 0 ] || { printf -v "$2" ''; return 0; }
-  local k; kfmt "$raw" k
+  case "$raw" in '' | *[!0-9]*)
+    printf -v "$2" ''
+    return 0
+    ;;
+  esac
+  [ "$raw" -gt 0 ] || {
+    printf -v "$2" ''
+    return 0
+  }
+  local k
+  kfmt "$raw" k
   printf -v "$2" 'Σ%s' "$k"
 }
 
@@ -118,13 +126,13 @@ claude_usage_rows() {
   fi
 
   local reset
-  [ "$week_reset" = "9999999999" ] \
-    && reset="⟳?@?:??" \
-    || reset="⟳$(date -d "@${week_reset}" '+%a@%H:%M' 2>/dev/null)"
+  [ "$week_reset" = "9999999999" ] &&
+    reset="⟳?@?:??" ||
+    reset="⟳$(date -d "@${week_reset}" '+%a@%H:%M' 2>/dev/null)"
 
   local session_tok weekly_tok
   _fmt_tokens "$(state_get tokens "$agent" session)" session_tok
-  _fmt_tokens "$(state_get tokens "$agent" weekly)"  weekly_tok
+  _fmt_tokens "$(state_get tokens "$agent" weekly)" weekly_tok
 
   # cost is never a truly empty string here — a missing cache reads as "-",
   # not "". Tab is bash's IFS-whitespace, so `read` COLLAPSES an empty field
@@ -132,17 +140,20 @@ claude_usage_rows() {
   # into cost's read slot. "-" keeps the field non-empty (paint_usage's own
   # numeric check already discards it, same as any other junk cost value).
   local session_cost weekly_cost
-  session_cost=$(state_get cost "$agent" session); session_cost="${session_cost:--}"
-  weekly_cost=$(state_get cost "$agent" weekly);   weekly_cost="${weekly_cost:--}"
+  session_cost=$(state_get cost "$agent" session)
+  session_cost="${session_cost:--}"
+  weekly_cost=$(state_get cost "$agent" weekly)
+  weekly_cost="${weekly_cost:--}"
 
   printf 'Session\t%s\t%s\t%s\t%s\n' "${session:-0}" "$block" "$session_cost" "$session_tok"
-  printf 'Weekly\t%s\t%s\t%s\t%s\n'  "${weekly:-0}"  "$reset" "$weekly_cost"  "$weekly_tok"
+  printf 'Weekly\t%s\t%s\t%s\t%s\n' "${weekly:-0}" "$reset" "$weekly_cost" "$weekly_tok"
 
   # Lifetime: no rate to show (pct left empty — paint_usage drops the "N%"
   # for a blank pct), just the running total since the earliest ccusage
   # record. Label carries the anchor date so the row is self-explanatory.
   local lifetime_cost lifetime_tok lifetime_since lifetime_label
-  lifetime_cost=$(state_get cost "$agent" lifetime); lifetime_cost="${lifetime_cost:--}"
+  lifetime_cost=$(state_get cost "$agent" lifetime)
+  lifetime_cost="${lifetime_cost:--}"
   _fmt_tokens "$(state_get tokens "$agent" lifetime)" lifetime_tok
   lifetime_since=$(state_get since "$agent" lifetime)
   if [ -n "$lifetime_since" ]; then
@@ -168,8 +179,8 @@ claude_usage_rows() {
 # settings, not tmux-ctdl.conf, so reading it is this module's business.
 # CLAUDE_SETTINGS is injectable for tests.
 claude_effort_level() {
-  jq -r '.effortLevel // "default"' "${CLAUDE_SETTINGS:-$HOME/.claude/settings.json}" 2>/dev/null \
-    || printf 'default'
+  jq -r '.effortLevel // "default"' "${CLAUDE_SETTINGS:-$HOME/.claude/settings.json}" 2>/dev/null ||
+    printf 'default'
 }
 
 # claude_price_for_model <model> — "<in_per_mtok> <out_per_mtok>", empty for a
@@ -179,11 +190,11 @@ claude_effort_level() {
 # grows a per-message mode.
 claude_price_for_model() {
   case "$1" in
-    *fable-5*|*mythos-5*)                      printf '10 50' ;;
-    *opus-5*|*opus-4-8*|*opus-4-7*|*opus-4-6*) printf '5 25' ;;
-    *sonnet-5*)                                printf '2 10' ;;  # intro pricing through 2026-08-31
-    *sonnet-4-6*)                              printf '3 15' ;;
-    *haiku-4-5*)                               printf '1 5' ;;
+    *fable-5* | *mythos-5*) printf '10 50' ;;
+    *opus-5* | *opus-4-8* | *opus-4-7* | *opus-4-6*) printf '5 25' ;;
+    *sonnet-5*) printf '2 10' ;; # intro pricing through 2026-08-31
+    *sonnet-4-6*) printf '3 15' ;;
+    *haiku-4-5*) printf '1 5' ;;
   esac
 }
 
@@ -194,7 +205,7 @@ claude_turn_cost() {
   local prices price_in price_out
   prices=$(claude_price_for_model "$1")
   [ -z "$prices" ] && return 0
-  read -r price_in price_out <<< "$prices"
+  read -r price_in price_out <<<"$prices"
   awk -v i="$2" -v o="$3" -v cr="$4" -v cw="$5" -v pin="$price_in" -v pout="$price_out" \
     'BEGIN{ printf "%.4f", (i*pin + o*pout + cr*pin*0.1 + cw*pin*1.25) / 1000000 }'
 }
@@ -219,7 +230,7 @@ claude_footer_line() {
   local model=$1 level=$2 in=$3 out=$4 cr=$5 cw=$6
   local cost total_k new_k hit_pct aiu line
   cost=$(claude_turn_cost "$model" "$in" "$out" "$cr" "$cw")
-  kfmt "$(( in + out + cr + cw ))" total_k
+  kfmt "$((in + out + cr + cw))" total_k
   kfmt "$cw" new_k
   hit_pct=$(awk -v cr="$cr" -v cw="$cw" -v i="$in" 'BEGIN{ d = cr + cw + i; printf "%.1f", (d > 0 ? cr / d * 100 : 0) }') # KCOV_TRACER_LOST
   line="Used Σ${total_k}(⊕${new_k},⇄${hit_pct}%) ↑${out}"
@@ -237,27 +248,32 @@ claude_footer_line() {
 # hook re-enters this one, and a duplicate cost report is noise.
 # Answers {"continue": true} whenever there is nothing to say.
 claude_footer() {
-  local payload; payload=$(cat)
+  local payload
+  payload=$(cat)
   local transcript stop_active
-  transcript=$(jq -r '.transcript_path // empty' <<< "$payload" 2>/dev/null)
-  stop_active=$(jq -r '.stop_hook_active // false' <<< "$payload" 2>/dev/null)
+  transcript=$(jq -r '.transcript_path // empty' <<<"$payload" 2>/dev/null)
+  stop_active=$(jq -r '.stop_hook_active // false' <<<"$payload" 2>/dev/null)
   if [ "$stop_active" = true ] || [ -z "$transcript" ]; then
-    printf '{"continue": true}\n'; return 0
+    printf '{"continue": true}\n'
+    return 0
   fi
 
   # The transcript write can lag the Stop event firing — retry briefly.
   local last usage model i
   for i in 1 2 3 4 5; do
     last=$(tac "$transcript" 2>/dev/null | grep -m1 '"role":"assistant"')
-    usage=$(jq -c '.message.usage // empty' <<< "$last" 2>/dev/null)
-    model=$(jq -r '.message.model // empty' <<< "$last" 2>/dev/null)
+    usage=$(jq -c '.message.usage // empty' <<<"$last" 2>/dev/null)
+    model=$(jq -r '.message.model // empty' <<<"$last" 2>/dev/null)
     [ -n "$usage" ] && break
     sleep 0.1
   done
-  [ -n "$usage" ] || { printf '{"continue": true}\n'; return 0; }
+  [ -n "$usage" ] || {
+    printf '{"continue": true}\n'
+    return 0
+  }
 
   local in out cr cw
-  IFS=$'\t' read -r in out cr cw < <(jq -r '[(.input_tokens // 0), (.output_tokens // 0), (.cache_read_input_tokens // 0), (.cache_creation_input_tokens // 0)] | @tsv' <<< "$usage" 2>/dev/null)
+  IFS=$'\t' read -r in out cr cw < <(jq -r '[(.input_tokens // 0), (.output_tokens // 0), (.cache_read_input_tokens // 0), (.cache_creation_input_tokens // 0)] | @tsv' <<<"$usage" 2>/dev/null)
 
   local level line
   level=$(claude_effort_level)
@@ -283,21 +299,21 @@ claude_footer() {
 # ccusage call already carries both, no reason to shell out twice.
 
 claude_cost_weekly() {
-  npm exec ccusage -- daily --since "$(date -d '7 days ago' +%Y-%m-%d)" --json 2>/dev/null \
-    | jq -r '([.daily[].totalCost // 0] | add // 0) as $c | ([.daily[].totalTokens // 0] | add // 0) as $t | "\($c)\t\($t)"'
+  npm exec ccusage -- daily --since "$(date -d '7 days ago' +%Y-%m-%d)" --json 2>/dev/null |
+    jq -r '([.daily[].totalCost // 0] | add // 0) as $c | ([.daily[].totalTokens // 0] | add // 0) as $t | "\($c)\t\($t)"'
 }
 
 claude_cost_session() {
-  npm exec ccusage -- blocks --json 2>/dev/null \
-    | jq -r '.blocks[-1] | "\(.costUSD // 0)\t\(.totalTokens // 0)"'
+  npm exec ccusage -- blocks --json 2>/dev/null |
+    jq -r '.blocks[-1] | "\(.costUSD // 0)\t\(.totalTokens // 0)"'
 }
 
 # claude_cost_lifetime — cost<TAB>tokens<TAB>since (earliest daily record's
 # date), summed over every day ccusage has on disk. No --since flag needed:
 # an absent one is "everything", which is exactly the anchor we want.
 claude_cost_lifetime() {
-  npm exec ccusage -- daily --json 2>/dev/null \
-    | jq -r '(.daily // []) as $d | ($d | map(.totalCost // 0) | add // 0) as $c | ($d | map(.totalTokens // 0) | add // 0) as $t | ($d | map(.period) | min // "") as $s | "\($c)\t\($t)\t\($s)"'
+  npm exec ccusage -- daily --json 2>/dev/null |
+    jq -r '(.daily // []) as $d | ($d | map(.totalCost // 0) | add // 0) as $c | ($d | map(.totalTokens // 0) | add // 0) as $t | ($d | map(.period) | min // "") as $s | "\($c)\t\($t)\t\($s)"'
 }
 
 # claude_refresh_costs <agent> — repopulate both slots' cost+tokens caches in
@@ -314,13 +330,14 @@ claude_refresh_costs() {
   now=$(date +%s)
   refresh=$(usage_refresh_secs)
   for slot in weekly session lifetime; do
-    [ "$(state_age "$now" cost "$agent" "$slot")" -gt "$refresh" ] && \
-      ( flock -n 9 || exit 0
+    [ "$(state_age "$now" cost "$agent" "$slot")" -gt "$refresh" ] &&
+      (
+        flock -n 9 || exit 0
         out=$("claude_cost_${slot}") &&
-        IFS=$'\t' read -r cost_val tok_val since_val <<< "$out" &&
-        state_put "$cost_val" cost   "$agent" "$slot" &&
-        state_put "$tok_val"  tokens "$agent" "$slot" &&
-        { [ -z "$since_val" ] || state_put "$since_val" since "$agent" "$slot"; }
+          IFS=$'\t' read -r cost_val tok_val since_val <<<"$out" &&
+          state_put "$cost_val" cost "$agent" "$slot" &&
+          state_put "$tok_val" tokens "$agent" "$slot" &&
+          { [ -z "$since_val" ] || state_put "$since_val" since "$agent" "$slot"; }
       ) 9>"$(state_lockfile "agent-cost-refresh-${slot}-${agent}.lock")" &
   done
   return 0

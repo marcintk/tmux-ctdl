@@ -83,9 +83,15 @@ get_agent_usage() {
   local -n _gau_out=$arrname
   _gau_out=()
   local -A _gau_rate
-  state_get_kv _gau_rate rate "$agent" && { for k in "${!_gau_rate[@]}"; do _gau_out[$k]="${_gau_rate[$k]}"; done; ok=0; }
+  state_get_kv _gau_rate rate "$agent" && {
+    for k in "${!_gau_rate[@]}"; do _gau_out[$k]="${_gau_rate[$k]}"; done
+    ok=0
+  }
   local -A _gau_shared
-  state_get_kv _gau_shared shared "$agent" "$tsess" "$win" && { for k in "${!_gau_shared[@]}"; do _gau_out[$k]="${_gau_shared[$k]}"; done; ok=0; }
+  state_get_kv _gau_shared shared "$agent" "$tsess" "$win" && {
+    for k in "${!_gau_shared[@]}"; do _gau_out[$k]="${_gau_shared[$k]}"; done
+    ok=0
+  }
   return $ok
 }
 
@@ -97,7 +103,7 @@ get_agent_usage_age() {
   local now=$1 agent=$2 tsess=$3 win=$4 age_rate age_shared
   age_rate=$(state_age "$now" rate "$agent")
   age_shared=$(state_age "$now" shared "$agent" "$tsess" "$win")
-  printf '%s' "$(( age_rate < age_shared ? age_rate : age_shared ))"
+  printf '%s' "$((age_rate < age_shared ? age_rate : age_shared))"
 }
 
 # get_agent_context <arrayname> <agent> <tsess> <win> — fills the array with
@@ -115,7 +121,7 @@ write_shared() {
   local agent=$1 content=$2
   local here tsess win
   here=$(tmux_here) || return 0
-  IFS=$'\t' read -r tsess win <<< "$here"
+  IFS=$'\t' read -r tsess win <<<"$here"
   state_put "$content" shared "$agent" "$tsess" "$win"
 }
 
@@ -142,7 +148,7 @@ _write_rate_locked() {
 }
 write_rate() {
   local agent=$1 content=$2
-  ( _write_rate_locked "$agent" "$content" ) 9>"$(state_lockfile "agent-rate-lock-${agent}")"
+  (_write_rate_locked "$agent" "$content") 9>"$(state_lockfile "agent-rate-lock-${agent}")"
 }
 
 # write_ctx <agent> <content> <model> <effort> — content is key<TAB>value lines
@@ -154,7 +160,7 @@ write_ctx() {
   local agent=$1 content=$2 model=$3 effort=$4
   local here tsess win
   here=$(tmux_here) || return 0
-  IFS=$'\t' read -r tsess win <<< "$here"
+  IFS=$'\t' read -r tsess win <<<"$here"
   content+=$'\n'"model"$'\t'"$model"$'\n'"effort"$'\t'"$effort"
   state_put "$content" ctx "$agent" "$tsess" "$win"
 }
@@ -166,9 +172,9 @@ interval_secs() {
   local v=$1
   case "$v" in
     *s) printf '%s' "${v%s}" ;;
-    *m) printf '%s' $(( ${v%m} * 60 )) ;;
-    *h) printf '%s' $(( ${v%h} * 3600 )) ;;
-    *)  printf '%s' "$v" ;;
+    *m) printf '%s' $((${v%m} * 60)) ;;
+    *h) printf '%s' $((${v%h} * 3600)) ;;
+    *) printf '%s' "$v" ;;
   esac
 }
 
@@ -177,10 +183,14 @@ interval_secs() {
 # name). For every <agent>_usage_rows building a tokens field.
 kfmt() {
   local v=${1:-0}
-  if   (( v >= 1000000000 )); then printf -v "$2" '%dB' "$(( v / 1000000000 ))"
-  elif (( v >= 1000000 ));    then printf -v "$2" '%dM' "$(( v / 1000000 ))"
-  elif (( v >= 1000 ));       then printf -v "$2" '%dk' "$(( v / 1000 ))"
-  else                             printf -v "$2" '%s' "$v"
+  if ((v >= 1000000000)); then
+    printf -v "$2" '%dB' "$((v / 1000000000))"
+  elif ((v >= 1000000)); then
+    printf -v "$2" '%dM' "$((v / 1000000))"
+  elif ((v >= 1000)); then
+    printf -v "$2" '%dk' "$((v / 1000))"
+  else
+    printf -v "$2" '%s' "$v"
   fi
 }
 
@@ -196,9 +206,12 @@ kfmt() {
 # since/until_at, which own the direction and its wording.
 _ladder() {
   local s=${1:-0}
-  if   [ "$s" -lt 60 ];   then printf '%ds' "$s"
-  elif [ "$s" -lt 3600 ]; then printf '%dm' "$(( s / 60 ))"
-  else awk -v s="$s" 'BEGIN{ printf "%.1fh", s/3600 }'
+  if [ "$s" -lt 60 ]; then
+    printf '%ds' "$s"
+  elif [ "$s" -lt 3600 ]; then
+    printf '%dm' "$((s / 60))"
+  else
+    awk -v s="$s" 'BEGIN{ printf "%.1fh", s/3600 }'
   fi
 }
 
@@ -211,8 +224,11 @@ since() { printf '%s ago' "$(_ladder "$1")"; }
 # the next payload carries a fresher target. <now> is a parameter, not a clock
 # read, so both branches are assertable.
 until_at() {
-  local secs=$(( $1 - $2 ))
-  [ "$secs" -le 0 ] && { printf 'now'; return 0; }
+  local secs=$(($1 - $2))
+  [ "$secs" -le 0 ] && {
+    printf 'now'
+    return 0
+  }
   printf 'in %s' "$(_ladder "$secs")"
 }
 
@@ -236,7 +252,7 @@ _hook_payload() { [ -t 0 ] || cat; }
 # adapter_push_usage <agent> — the agent handed us a payload on stdin (Claude's
 # statusLine). No rate limit: the agent decides when to push.
 adapter_push_usage() {
-  adapter_main "$1" <<< "$(_hook_payload)"
+  adapter_main "$1" <<<"$(_hook_payload)"
 }
 
 # adapter_pull_usage <agent> <now> — no hook exists, so fetch the payload
@@ -271,31 +287,39 @@ adapter_footer() {
 # Read once into a local, then handed to each parser on its own stdin: the two
 # parsers see the same bytes without either of them consuming the other's.
 adapter_main() {
-  local agent=$1 payload; payload=$(cat)
+  local agent=$1 payload
+  payload=$(cat)
 
-  local shared_kv; shared_kv="$("${agent}_parse_shared" <<< "$payload")"
-  local -A F; kv_fill F <<< "$shared_kv"
+  local shared_kv
+  shared_kv="$("${agent}_parse_shared" <<<"$payload")"
+  local -A F
+  kv_fill F <<<"$shared_kv"
 
   # Write only if we have anything worth showing (any field non-empty). model/
   # effort (per-window) and every other key (account-wide rate fields) split
   # into their own stores here — write_shared/write_rate each own how THEIR
   # half is kept, this just sorts the mail.
   local have=0 v
-  for v in "${F[@]}"; do [ -n "$v" ] && { have=1; break; }; done
+  for v in "${F[@]}"; do [ -n "$v" ] && {
+    have=1
+    break
+  }; done
   if [ "$have" -eq 1 ]; then
     local mw_kv="" rate_kv="" k
     for k in "${!F[@]}"; do
       case "$k" in
-        model|effort) mw_kv+="${mw_kv:+$'\n'}${k}"$'\t'"${F[$k]}" ;;
-        *)            rate_kv+="${rate_kv:+$'\n'}${k}"$'\t'"${F[$k]}" ;;
+        model | effort) mw_kv+="${mw_kv:+$'\n'}${k}"$'\t'"${F[$k]}" ;;
+        *) rate_kv+="${rate_kv:+$'\n'}${k}"$'\t'"${F[$k]}" ;;
       esac
     done
     write_shared "$agent" "$mw_kv"
     [ -n "$rate_kv" ] && write_rate "$agent" "$rate_kv"
   fi
 
-  local ctx_kv; ctx_kv="$("${agent}_parse_context" <<< "$payload")"
-  local -A C; kv_fill C <<< "$ctx_kv"
+  local ctx_kv
+  ctx_kv="$("${agent}_parse_context" <<<"$payload")"
+  local -A C
+  kv_fill C <<<"$ctx_kv"
   [ -n "${C[ctx]:-}" ] && write_ctx "$agent" "$ctx_kv" "${F[model]:-}" "${F[effort]:-}"
 
   declare -f "${agent}_refresh_costs" >/dev/null 2>&1 && "${agent}_refresh_costs" "$agent"

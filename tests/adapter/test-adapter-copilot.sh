@@ -13,31 +13,35 @@ export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 # model shown, usage segment gracefully omitted (copilot_format_usage returns
 # early when today/week/month are empty).
 test_display_renders_copilot_model_only() {
-  local th; th=$(mktemp -d)
-  echo "CODING_AGENT='copilot'" > "$th/tmux-ctdl.conf"
-  local tmp; tmp=$(mktemp -d)
-  printf 'model\tGPT-5\neffort\thigh\n' > "$tmp/agent-shared-copilot-test-session-@1"
+  local th
+  th=$(mktemp -d)
+  echo "CODING_AGENT='copilot'" >"$th/tmux-ctdl.conf"
+  local tmp
+  tmp=$(mktemp -d)
+  printf 'model\tGPT-5\neffort\thigh\n' >"$tmp/agent-shared-copilot-test-session-@1"
   local out
   out=$(TMUX_CTDL_CONF="$th/tmux-ctdl.conf" AGENT_TMP_DIR="$tmp" \
-         bash "$TMUX_CTDL_HOME/tmux-ctdl.sh" agentbar test-session @1)
+    bash "$TMUX_CTDL_HOME/tmux-ctdl.sh" agentbar test-session @1)
   rm -rf "$th" "$tmp"
   assert_contains "$out" "Copilot: GPT-5" "copilot model line rendered" &&
-  ! printf '%s' "$out" | grep -qF "Today:"  # no usage segment without data
+    ! printf '%s' "$out" | grep -qF "Today:" # no usage segment without data
 }
 
 # When usage data IS present, copilot_format_usage renders Today/Week/Month.
 test_display_renders_copilot_usage() {
-  local th; th=$(mktemp -d)
-  echo "CODING_AGENT='copilot'" > "$th/tmux-ctdl.conf"
-  local tmp; tmp=$(mktemp -d)
-  printf 'today\t12.5\nweek\t40\nmonth\t63.2\nmodel\tGPT-5\neffort\thigh\n' > "$tmp/agent-shared-copilot-test-session-@1"
+  local th
+  th=$(mktemp -d)
+  echo "CODING_AGENT='copilot'" >"$th/tmux-ctdl.conf"
+  local tmp
+  tmp=$(mktemp -d)
+  printf 'today\t12.5\nweek\t40\nmonth\t63.2\nmodel\tGPT-5\neffort\thigh\n' >"$tmp/agent-shared-copilot-test-session-@1"
   local out
   out=$(TMUX_CTDL_CONF="$th/tmux-ctdl.conf" AGENT_TMP_DIR="$tmp" \
-         bash "$TMUX_CTDL_HOME/tmux-ctdl.sh" agentbar test-session @1)
+    bash "$TMUX_CTDL_HOME/tmux-ctdl.sh" agentbar test-session @1)
   rm -rf "$th" "$tmp"
-  assert_contains "$out" "Today: 12.5%"  &&
-  assert_contains "$out" "Week: 40.0%"   &&
-  assert_contains "$out" "Month: 63.2%"
+  assert_contains "$out" "Today: 12.5%" &&
+    assert_contains "$out" "Week: 40.0%" &&
+    assert_contains "$out" "Month: 63.2%"
 }
 
 test_collect_no_db_is_empty_object() {
@@ -55,18 +59,19 @@ test_parse_context_is_always_empty() {
 # real sqlite3 call. Standalone here, no foreign binary involved.
 test_parse_shared_direct() {
   . "$ADAPTER/adapter-copilot.sh"
-  local out; out=$(printf '{"model":"GPT-5","reasoning_effort":"high"}' | copilot_parse_shared)
+  local out
+  out=$(printf '{"model":"GPT-5","reasoning_effort":"high"}' | copilot_parse_shared)
   assert_contains "$out" "$(printf 'model\tGPT-5')" "model parsed directly" &&
-  assert_contains "$out" "$(printf 'effort\thigh')" "effort parsed directly"
+    assert_contains "$out" "$(printf 'effort\thigh')" "effort parsed directly"
 }
-
 
 # copilot_live_cwds: pgrep -x copilot → readlink /proc/<pid>/cwd, one cwd/line.
 # Mock pgrep with our own live shell pid so /proc/<pid>/cwd resolves for real.
 test_live_cwds_resolves_pid_cwd() {
   . "$ADAPTER/adapter-copilot.sh"
   pgrep() { echo $$; }
-  local out; out=$(copilot_live_cwds)
+  local out
+  out=$(copilot_live_cwds)
   unset -f pgrep
   assert_contains "$out" "$(readlink /proc/$$/cwd)" "resolves live pid cwd"
 }

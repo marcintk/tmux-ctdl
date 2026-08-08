@@ -18,8 +18,8 @@ tmux_ctdl_boot tmux
 # against that pane's window explicitly rather than tmux's ambient "current
 # window" (see tmux_window_option_get/set).
 
-layout_agent_pane()        { tmux_window_option_get "$1" "@coding_agent_pane_id"; }
-layout_tracker_pane()      { tmux_window_option_get "$1" "@change_tracker_pane_id"; }
+layout_agent_pane() { tmux_window_option_get "$1" "@coding_agent_pane_id"; }
+layout_tracker_pane() { tmux_window_option_get "$1" "@change_tracker_pane_id"; }
 layout_tracker_state_get() { tmux_window_option_get "$1" "@change_tracker_state"; }
 layout_tracker_state_set() { tmux_window_option_set "$1" "@change_tracker_state" "$2"; }
 
@@ -38,11 +38,11 @@ layout_build() {
   tracker_pane=$(tmux_split_window "$agent_pane" "$cwd" -h 55)
   terminal_pane=$(tmux_split_window "$tracker_pane" "$cwd" -v 25)
 
-  tmux_send_keys "$agent_pane"    "$agent_cmd"
-  tmux_send_keys "$tracker_pane"  "$tracker_cmd"
+  tmux_send_keys "$agent_pane" "$agent_cmd"
+  tmux_send_keys "$tracker_pane" "$tracker_cmd"
   tmux_send_keys "$terminal_pane" "clear"
 
-  tmux_window_option_set "$agent_pane" "@coding_agent_pane_id"   "$agent_pane"
+  tmux_window_option_set "$agent_pane" "@coding_agent_pane_id" "$agent_pane"
   tmux_window_option_set "$agent_pane" "@change_tracker_pane_id" "$tracker_pane"
   layout_tracker_state_set "$agent_pane" "$tracker_cmd"
 
@@ -108,7 +108,11 @@ layout_open_workspaces() {
   tmux_rename_session "$(basename "$base" | tr '.:' '--')"
   # One physical line (loop body included): kcov's bash line tracer doesn't
   # credit a bare `done < <(...)` on its own line even though it runs.
-  while IFS= read -r dir; do [ -n "$dir" ] || continue; pane=$(tmux_new_window "$dir"); tmux_send_keys "$pane" "$cmd"; done < <(layout_workspace_dirs "$base")
+  while IFS= read -r dir; do
+    [ -n "$dir" ] || continue
+    pane=$(tmux_new_window "$dir")
+    tmux_send_keys "$pane" "$cmd"
+  done < <(layout_workspace_dirs "$base")
   tmux_kill_window "$installer"
 }
 
@@ -122,6 +126,10 @@ layout_open_workspaces_new_session() {
   local base=$1 cmd=$2 name installer dir pane
   name="$(basename "$base" | tr '.:' '--')"
   installer=$(tmux_new_session "$name" "$base")
-  while IFS= read -r dir; do [ -n "$dir" ] || continue; pane=$(tmux_new_window "$dir" "$name"); tmux_send_keys "$pane" "$cmd"; done < <(layout_workspace_dirs "$base")
+  while IFS= read -r dir; do
+    [ -n "$dir" ] || continue
+    pane=$(tmux_new_window "$dir" "$name")
+    tmux_send_keys "$pane" "$cmd"
+  done < <(layout_workspace_dirs "$base")
   tmux_kill_window "$installer"
 }

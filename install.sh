@@ -28,7 +28,10 @@ deploy_workspace() {
 
 append_marked() {
   local file=$1 snippet=$2
-  [[ -f "$file" ]] || { log "skip $file (not found)"; return 0; }
+  [[ -f "$file" ]] || {
+    log "skip $file (not found)"
+    return 0
+  }
   if grep -qF "$MARK_START" "$file" 2>/dev/null; then
     log "$file already has ctdl block, skipping"
     return 0
@@ -38,20 +41,26 @@ append_marked() {
     echo "$MARK_START"
     cat "$snippet"
     echo "$MARK_END"
-  } >> "$file"
+  } >>"$file"
   log "appended ctdl block to $file"
 }
 
 merge_claude_settings() {
-  [[ -f "$CLAUDE_SETTINGS" ]] || { log "skip $CLAUDE_SETTINGS (not found)"; return 0; }
-  command -v jq >/dev/null || { log "jq not found, skipping $CLAUDE_SETTINGS merge — see integrations/claude-settings.json"; return 0; }
+  [[ -f "$CLAUDE_SETTINGS" ]] || {
+    log "skip $CLAUDE_SETTINGS (not found)"
+    return 0
+  }
+  command -v jq >/dev/null || {
+    log "jq not found, skipping $CLAUDE_SETTINGS merge — see integrations/claude-settings.json"
+    return 0
+  }
   if jq -e '.statusLine.command? // "" | contains("tmux-ctdl.sh")' "$CLAUDE_SETTINGS" >/dev/null 2>&1; then
     log "$CLAUDE_SETTINGS already wired, skipping"
     return 0
   fi
   local tmp
   tmp=$(mktemp)
-  jq -s '.[0] * .[1]' "$CLAUDE_SETTINGS" "$REPO_DIR/integrations/claude-settings.json" > "$tmp"
+  jq -s '.[0] * .[1]' "$CLAUDE_SETTINGS" "$REPO_DIR/integrations/claude-settings.json" >"$tmp"
   cp "$CLAUDE_SETTINGS" "$CLAUDE_SETTINGS.bak"
   mv "$tmp" "$CLAUDE_SETTINGS"
   log "merged ctdl hooks into $CLAUDE_SETTINGS (backup: $CLAUDE_SETTINGS.bak)"

@@ -37,7 +37,10 @@ _ctdl_boot() {
 
 # Coding Tmux Dev Layout — the ctdl pane layout in the current window
 ctdl() {
-  [[ -z $TMUX ]] && { echo "You must be inside tmux to use ctdl."; return 1; }
+  [[ -z $TMUX ]] && {
+    echo "You must be inside tmux to use ctdl."
+    return 1
+  }
 
   _ctdl_boot layout agent
   layout_build "$TMUX_PANE" "$PWD" "$AGENT_CMD" "$CHANGE_TRACKER_CMD"
@@ -74,7 +77,10 @@ ctdlm() {
     if find "$PWD" -maxdepth 2 -name ".git" -type d -print -quit 2>/dev/null | grep -q .; then
       base_dir="$PWD"
     else
-      cd ~/Development || { echo "Cannot cd to ~/Development"; return 1; }
+      cd ~/Development || {
+        echo "Cannot cd to ~/Development"
+        return 1
+      }
       base_dir="$PWD"
     fi
     layout_open_workspaces "$base_dir" "$TMUX_PANE" ctdl
@@ -96,7 +102,8 @@ ctdlm() {
 # Each arm is boot + one lib verb — the lib owns the behaviour, this owns
 # nothing but routing. See libs/boot-lib.sh for lib names.
 _ctdl_main() {
-  local verb=$1; shift
+  local verb=$1
+  shift
 
   case "$verb" in
     tracker-editor-toggle)
@@ -117,7 +124,7 @@ _ctdl_main() {
     wintab-badge)
       # Claude Code hooks always pipe a JSON payload this verb never reads —
       # drain it so the caller doesn't block on an unread pipe.
-      cat > /dev/null
+      cat >/dev/null
       _ctdl_boot wintab
       wintab_hook "$CODING_AGENT" "$1"
       ;;
@@ -127,11 +134,20 @@ _ctdl_main() {
       agentbar_render "$CODING_AGENT" "${1:-_}" "${2:-0}" "$(date +%s)" || return 0
       ;;
 
-    agent-push-usage) _ctdl_boot adapter agent; adapter_push_usage "$CODING_AGENT" ;;
+    agent-push-usage)
+      _ctdl_boot adapter agent
+      adapter_push_usage "$CODING_AGENT"
+      ;;
 
-    agent-footer) _ctdl_boot adapter agent; adapter_footer "$CODING_AGENT" ;;
+    agent-footer)
+      _ctdl_boot adapter agent
+      adapter_footer "$CODING_AGENT"
+      ;;
 
-    agent-pull-usage) _ctdl_boot adapter agent; adapter_pull_usage "$CODING_AGENT" "$(date +%s)" ;;
+    agent-pull-usage)
+      _ctdl_boot adapter agent
+      adapter_pull_usage "$CODING_AGENT" "$(date +%s)"
+      ;;
 
     *)
       echo "ctdl: unknown verb '$verb'" >&2
