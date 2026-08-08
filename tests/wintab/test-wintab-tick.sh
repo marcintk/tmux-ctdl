@@ -126,6 +126,16 @@ test_idle_window_makes_no_tmux_writes() {
   assert_empty "$(_calls | grep set-window-option)" "no badge writes when nothing changes"
 }
 
+# wintab_status_tick composes wintab_tick + adapter_pull_usage + state_reap_stale
+# (see tmux-ctdl.sh's wintab-tick arm) — the reap marker existing after one CLI
+# tick is the only externally visible proof the composed call, not just the
+# badge poll alone, actually ran.
+test_tick_runs_full_status_cycle() {
+  setup
+  _tick
+  [ -f "$AGENT_TMP_DIR/agent-reap-marker" ]
+}
+
 run_tests \
   test_no_session_exits_silently \
   test_live_process_sets_pulse \
@@ -136,4 +146,5 @@ run_tests \
   test_dead_stale_badge_cleared \
   test_live_blocked_badge_survives_poll \
   test_agent_pane_matches_when_active_pane_wandered \
-  test_idle_window_makes_no_tmux_writes
+  test_idle_window_makes_no_tmux_writes \
+  test_tick_runs_full_status_cycle

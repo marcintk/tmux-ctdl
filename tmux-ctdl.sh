@@ -85,13 +85,7 @@ _ctdl_main() {
 
     wintab-tick)
       _ctdl_boot wintab adapter agent state
-      wintab_tick "$CODING_AGENT" "$1"
-      # The tick is the only clock a pull-based agent gets; adapter_pull_usage
-      # owns the rate limit, so calling it every second is free for push agents.
-      adapter_pull_usage "$CODING_AGENT" "$(date +%s)"
-      # Own rate limit (STATE_REAP_INTERVAL) makes this free on the other 599
-      # ticks out of every 600.
-      state_reap_stale "$(date +%s)"
+      wintab_status_tick "$CODING_AGENT" "$1"
       ;;
 
     wintab-badge)

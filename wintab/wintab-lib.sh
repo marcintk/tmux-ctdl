@@ -216,3 +216,20 @@ wintab_tick() {
   # credit a bare `done < <(...)` on its own line even though it runs.
   while IFS=$'\t' read -r win is_live; do [ -n "$win" ] || continue; wintab_on_tick "$agent" "$tsess" "$win" "$is_live" "$tick" "$now"; done < <(wintab_live_windows "$panes" "$live")
 }
+
+# wintab_status_tick <agent> <tsess> — the whole once-a-second status-format
+# cycle: badge poll, then the usage pull a pull-based agent has no hook for,
+# then the state reaper. tmux-ctdl.sh's wintab-tick verb calls this and nothing
+# else, keeping the "one arm, one lib verb" rule the router documents for
+# itself — this function, not the router, owns the order and why it's safe.
+wintab_status_tick() {
+  local agent=$1 tsess=$2 now
+  now=$(date +%s)
+  wintab_tick "$agent" "$tsess"
+  # adapter_pull_usage owns its own rate limit, so calling it every second is
+  # free for push agents (no-op) and for pull agents inside USAGE_REFRESH.
+  adapter_pull_usage "$agent" "$now"
+  # Own rate limit (STATE_REAP_INTERVAL) makes this free on the other 599
+  # ticks out of every 600.
+  state_reap_stale "$now"
+}
