@@ -64,7 +64,7 @@
 # State lives in state-lib.sh (verbs, not paths) and every tmux call goes through
 # tmux-lib.sh — this module touches neither the filesystem nor tmux directly.
 
-. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot.sh"
+. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot-lib.sh"
 tmux_ctdl_boot state tmux
 
 # ── State value schema ───────────────────────────────────────────────────────

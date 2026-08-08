@@ -10,7 +10,7 @@
 # source tmux-ctdl.conf + the agent module themselves and pass the resulting
 # commands in as arguments.
 
-. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot.sh"
+. "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot-lib.sh"
 tmux_ctdl_boot tmux
 
 # ── Role accessors ───────────────────────────────────────────────────────
