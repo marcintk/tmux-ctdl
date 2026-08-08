@@ -31,7 +31,7 @@
 # active one; there's no support yet for two agents' hooks feeding this at once.
 
 _ctdl_boot() {
-  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/tmux-ctdl-boot.sh"
+  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot.sh"
   tmux_ctdl_boot "$@"
 }
 
@@ -90,7 +90,7 @@ ctdlm() {
 
 # ── Verb dispatch (executed, not sourced) ────────────────────────────────────
 # Each arm is boot + one lib verb — the lib owns the behaviour, this owns
-# nothing but routing. See tmux-ctdl-boot.sh for lib names.
+# nothing but routing. See libs/boot.sh for lib names.
 _ctdl_main() {
   local verb=$1; shift
 
