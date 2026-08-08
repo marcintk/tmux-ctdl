@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# tmux-ctdl-boot.sh — the `agent:<id>` lib name (source a specific agent's
+# libs/boot.sh — the `agent:<id>` lib name (source a specific agent's
 # module regardless of CODING_AGENT), which no push/pull entry point uses
 # yet but the loader has always supported per its own docstring.
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
-. "$DIR/helpers.sh"
+. "$DIR/../helpers.sh"
 
-export TMUX_CTDL_HOME="$(cd "$DIR/.." && pwd)"
+export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 CONF_DIR=$(mktemp -d)
 cat > "$CONF_DIR/tmux-ctdl.conf" << CONF
 CODING_AGENT="copilot"
@@ -16,7 +16,7 @@ trap 'rm -rf "$CONF_DIR"' EXIT
 test_agent_colon_id_sources_that_specific_module() {
   unset _WB_LOADED 2>/dev/null
   declare -gA _WB_LOADED
-  . "$TMUX_CTDL_HOME/tmux-ctdl-boot.sh"
+  . "$TMUX_CTDL_HOME/libs/boot.sh"
   tmux_ctdl_boot "agent:claude"
   declare -f claude_parse_shared >/dev/null 2>&1
 }

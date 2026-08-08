@@ -6,7 +6,7 @@ name (searchable, states its home); `ctdl` stays the command you actually
 type.
 
 tmux dev layout (`ctdl`) + agent status bar/badges for Claude Code and
-Copilot. Everything boots through `tmux-ctdl-boot.sh`, which reads
+Copilot. Everything boots through `libs/boot.sh`, which reads
 `tmux-ctdl.conf` then sources requested libs by name (`tmux`, `state`,
 `layout`, `adapter`, `wintab`, `agentbar`) — no caller hardcodes a path
 except `tmux-ctdl.sh` itself. A lib needing another lib calls `tmux_ctdl_boot`
@@ -70,10 +70,10 @@ one active agent's hooks assumed wired at a time.
 ```
 tmux-ctdl/
   tmux-ctdl.sh        external entry point: sourceable (ctdl, ctdlm) + executable (verbs)
-  tmux-ctdl-boot.sh   the one way into the runtime; loads conf + libs
   tmux-ctdl.conf      active agent, editor/tracker commands, timing — overrides only,
                       every colour/threshold defaults at the module that reads it
   libs/
+    boot.sh           the one way into the runtime; loads conf + libs
     tmux-lib.sh       only module that knows tmux syntax + where "here" is
     state-lib.sh      agent state store (get/put/mark/clear/exists/age) + reap_stale
     layout-lib.sh     pane layout verbs, owns tmux window options
