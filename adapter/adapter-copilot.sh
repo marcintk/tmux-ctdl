@@ -7,7 +7,7 @@
 # Enable by setting CODING_AGENT=copilot in tmux-ctdl.conf.
 
 if ! declare -f get_agent_usage >/dev/null 2>&1; then
-  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/tmux-ctdl-boot.sh"
   tmux_ctdl_boot adapter
 fi
 

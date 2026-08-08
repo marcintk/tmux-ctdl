@@ -4,7 +4,7 @@
 # never a subdirectory path directly.
 #
 # Sourced from a shell rc:
-#   source ~/.config/tmux/workspace/tmux-ctdl.sh
+#   source ~/.config/tmux/tmux-ctdl/tmux-ctdl.sh
 # defines two functions:
 #   ctdl   — build the 3-pane layout (agent / change-tracker / terminal)
 #   ctdlm  — one ctdl window per git workspace under the current dir
@@ -31,7 +31,7 @@
 # active one; there's no support yet for two agents' hooks feeding this at once.
 
 _ctdl_boot() {
-  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+  . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/tmux-ctdl-boot.sh"
   tmux_ctdl_boot "$@"
 }
 

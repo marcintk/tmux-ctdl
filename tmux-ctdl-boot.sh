@@ -3,7 +3,7 @@
 # active agent module — lives HERE and nowhere else. Entry points AND libs name
 # libs, not paths:
 #
-#   . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/workspace}/tmux-ctdl-boot.sh"
+#   . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/tmux-ctdl-boot.sh"
 #   tmux_ctdl_boot layout agent
 #
 # Lib names: tmux · state · layout · adapter · wintab · agentbar. `agent`
@@ -25,7 +25,7 @@
 # TMUX_CTDL_CONF at a scratch file, so a test run drives the real code with a
 # throwaway palette.
 
-: "${TMUX_CTDL_HOME:=$HOME/.config/tmux/workspace}"
+: "${TMUX_CTDL_HOME:=$HOME/.config/tmux/tmux-ctdl}"
 : "${TMUX_CTDL_CONF:=$TMUX_CTDL_HOME/tmux-ctdl.conf}"
 
 declare -gA _WB_LOADED

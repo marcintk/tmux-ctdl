@@ -4,7 +4,7 @@
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "~/.config/tmux/workspace/tmux-ctdl.sh wintab-badge CLEAR" }
+          { "type": "command", "command": "~/.config/tmux/tmux-ctdl/tmux-ctdl.sh wintab-badge CLEAR" }
         ]
       }
     ],
@@ -12,7 +12,7 @@
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "~/.config/tmux/workspace/tmux-ctdl.sh wintab-badge RUNNING" }
+          { "type": "command", "command": "~/.config/tmux/tmux-ctdl/tmux-ctdl.sh wintab-badge RUNNING" }
         ]
       }
     ],
@@ -20,8 +20,8 @@
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "~/.config/tmux/workspace/tmux-ctdl.sh wintab-badge DONE" },
-          { "type": "command", "command": "~/.config/tmux/workspace/tmux-ctdl.sh agent-footer" }
+          { "type": "command", "command": "~/.config/tmux/tmux-ctdl/tmux-ctdl.sh wintab-badge DONE" },
+          { "type": "command", "command": "~/.config/tmux/tmux-ctdl/tmux-ctdl.sh agent-footer" }
         ]
       }
     ],
@@ -29,7 +29,7 @@
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "~/.config/tmux/workspace/tmux-ctdl.sh wintab-badge DONE" }
+          { "type": "command", "command": "~/.config/tmux/tmux-ctdl/tmux-ctdl.sh wintab-badge DONE" }
         ]
       }
     ],
@@ -37,14 +37,14 @@
       {
         "matcher": "",
         "hooks": [
-          { "type": "command", "command": "~/.config/tmux/workspace/tmux-ctdl.sh wintab-badge PERMISSION" }
+          { "type": "command", "command": "~/.config/tmux/tmux-ctdl/tmux-ctdl.sh wintab-badge PERMISSION" }
         ]
       }
     ]
   },
   "statusLine": {
     "type": "command",
-    "command": "~/.config/tmux/workspace/tmux-ctdl.sh agent-push-usage",
+    "command": "~/.config/tmux/tmux-ctdl/tmux-ctdl.sh agent-push-usage",
     "padding": 0,
     "refreshInterval": 5
   }
