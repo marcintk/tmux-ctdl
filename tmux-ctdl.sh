@@ -43,27 +43,49 @@ ctdl() {
   layout_build "$TMUX_PANE" "$PWD" "$AGENT_CMD" "$CHANGE_TRACKER_CMD"
 }
 
-# Coding Tmux Dev Layout Multi — one ctdl window per git workspace under the current
-# dir. Works inside and outside tmux, handles symlinks.
+# Coding Tmux Dev Layout Multi — one ctdl window per git workspace under a
+# base dir. No args: the current dir if it holds git workspaces, else
+# ~/Development (the original single-dir behaviour). One or more dirs:
+# ctdlm ~/Development ~/Development/ha — one tmux SESSION per dir (the first
+# reuses the calling session, same as the no-arg path; each further dir gets
+# its own new detached session). Works inside and outside tmux, handles
+# symlinks.
 ctdlm() {
-  # Outside tmux: start tmux and immediately run ctdlm inside it. The only raw
-  # tmux call left in this file — there is no session to talk to yet.
+  local d
+
+  # Outside tmux: start tmux and immediately run ctdlm inside it, forwarding
+  # any base dirs. The only raw tmux call left in this file — there is no
+  # session to talk to yet.
   if [[ -z $TMUX ]]; then
-    tmux new-session "zsh -ic ctdlm"
+    if [[ $# -eq 0 ]]; then
+      tmux new-session "zsh -ic ctdlm"
+    else
+      local q=""
+      for d in "$@"; do q+=" $(printf '%q' "$d")"; done
+      tmux new-session "zsh -ic 'ctdlm$q'"
+    fi
     return 0
   fi
 
   _ctdl_boot layout
 
-  local base_dir
-  if find "$PWD" -maxdepth 2 -name ".git" -type d -print -quit 2>/dev/null | grep -q .; then
-    base_dir="$PWD"
-  else
-    cd ~/Development || { echo "Cannot cd to ~/Development"; return 1; }
-    base_dir="$PWD"
+  if [[ $# -eq 0 ]]; then
+    local base_dir
+    if find "$PWD" -maxdepth 2 -name ".git" -type d -print -quit 2>/dev/null | grep -q .; then
+      base_dir="$PWD"
+    else
+      cd ~/Development || { echo "Cannot cd to ~/Development"; return 1; }
+      base_dir="$PWD"
+    fi
+    layout_open_workspaces "$base_dir" "$TMUX_PANE" ctdl
+    return 0
   fi
 
-  layout_open_workspaces "$base_dir" "$TMUX_PANE" ctdl
+  layout_open_workspaces "$1" "$TMUX_PANE" ctdl
+  shift
+  for d in "$@"; do
+    layout_open_workspaces_new_session "$d" ctdl
+  done
 }
 
 # ── Verb dispatch (executed, not sourced) ────────────────────────────────────

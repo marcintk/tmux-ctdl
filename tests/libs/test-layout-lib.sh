@@ -128,11 +128,32 @@ test_open_workspaces_one_window_per_repo() {
   ! printf '%s' "$calls" | grep -qF "$base/plain"
 }
 
+# ctdlm's second-dir-and-beyond path: a brand-new detached session, not a
+# rename of the caller's — everything else (one window per repo, plain dirs
+# skipped, placeholder window closed) is the same shape as
+# layout_open_workspaces above.
+test_open_workspaces_new_session_creates_and_populates_it() {
+  setup
+  export MOCK_NEW_PANE=%7 MOCK_NEW_SESSION_PANE=%8
+  local base; base=$(mktemp -d)/other.workspace
+  mkdir -p "$base/repo-a/.git" "$base/plain"
+  layout_open_workspaces_new_session "$base" ctdl
+  local calls; calls=$(cat /tmp/mock-tmux-calls)
+  rm -rf "$(dirname "$base")"
+  assert_contains "$calls" "new-session -d -s other-workspace -c $base" "new session named from base, dots swapped" &&
+  assert_contains "$calls" "new-window -c $base/repo-a -t other-workspace:" "window per git repo, targeted at the new session" &&
+  assert_contains "$calls" 'send-keys -t %7 ctdl C-m' "ctdl launched in the new pane" &&
+  assert_contains "$calls" 'kill-window -t %8' "placeholder window closed" &&
+  ! printf '%s' "$calls" | grep -q 'rename-session' &&
+  ! printf '%s' "$calls" | grep -qF "$base/plain"
+}
+
 run_tests \
   test_build_renames_and_splits \
   test_workspace_dirs_lists_only_git_repos \
   test_workspace_dirs_empty_base_is_silent \
   test_open_workspaces_one_window_per_repo \
+  test_open_workspaces_new_session_creates_and_populates_it \
   test_build_launches_agent_and_tracker \
   test_build_records_pane_roles_and_selects_agent \
   test_toggle_switches_tracker_to_editor \

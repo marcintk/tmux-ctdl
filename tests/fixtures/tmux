@@ -13,6 +13,7 @@
 #                    MOCK_OPT_change_tracker_pane_id. Falls back to MOCK_BADGE.
 #   MOCK_SPLIT_PANE — pane_id printed by split-window (default: %2)
 #   MOCK_NEW_PANE   — pane_id printed by new-window (default: %9)
+#   MOCK_NEW_SESSION_PANE — pane_id printed by new-session -d (default: %8)
 # All calls are logged to /tmp/mock-tmux-calls (appended).
 
 printf 'tmux %s\n' "$*" >> /tmp/mock-tmux-calls
@@ -39,6 +40,9 @@ case "$1" in
     ;;
   new-window)
     printf '%s\n' "${MOCK_NEW_PANE:-%9}"
+    ;;
+  new-session)
+    printf '%s\n' "${MOCK_NEW_SESSION_PANE:-%8}"
     ;;
   list-windows)
     printf '%s\t%s\n' "${MOCK_WIN:-@1}" "${MOCK_PPATH:-/home/user/project}"

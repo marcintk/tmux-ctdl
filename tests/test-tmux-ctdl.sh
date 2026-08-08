@@ -101,6 +101,15 @@ test_ctdlm_outside_tmux_starts_session() {
     "starts a fresh tmux session and re-enters ctdlm"
 }
 
+# Base dirs given outside tmux must survive the re-entry into the new session.
+test_ctdlm_outside_tmux_forwards_dirs() {
+  setup
+  ( . "$SCRIPTS/tmux-ctdl.sh"; unset TMUX; ctdlm ~/Development ~/Development/ha )
+  assert_contains "$(cat /tmp/mock-tmux-calls)" \
+    "new-session zsh -ic 'ctdlm $HOME/Development $HOME/Development/ha'" \
+    "both dirs forwarded into the re-entered ctdlm call"
+}
+
 # ctdlm() inside tmux, run from a dir with git workspaces one level down —
 # one window per workspace via layout_open_workspaces.
 test_ctdlm_inside_tmux_opens_workspaces() {
@@ -115,6 +124,29 @@ test_ctdlm_inside_tmux_opens_workspaces() {
   local calls; calls=$(cat /tmp/mock-tmux-calls)
   rm -rf "$base"
   assert_contains "$calls" "new-window -c $base/repo-a" "one window opened for the git workspace"
+}
+
+# ctdlm() with two or more dirs: the first reuses the calling session (same
+# as the single-dir path — rename, populate, close the installer window);
+# each further dir gets its OWN new detached session instead.
+test_ctdlm_multiple_dirs_fans_out_to_new_sessions() {
+  setup
+  export MOCK_NEW_PANE=%7 MOCK_NEW_SESSION_PANE=%8
+  local base1; base1=$(mktemp -d)/first.ws
+  local base2; base2=$(mktemp -d)/second.ws
+  mkdir -p "$base1/repo-a/.git" "$base2/repo-b/.git"
+  local out
+  out=$(. "$SCRIPTS/tmux-ctdl.sh"
+        export TMUX=/tmp/fake-tmux-socket TMUX_PANE=mock-installer
+        ctdlm "$base1" "$base2")
+  local calls; calls=$(cat /tmp/mock-tmux-calls)
+  rm -rf "$(dirname "$base1")" "$(dirname "$base2")"
+  assert_contains "$calls" 'rename-session first-ws' "first dir renames the calling session" &&
+  assert_contains "$calls" "new-window -c $base1/repo-a" "window opened for the first dir's repo" &&
+  assert_contains "$calls" 'kill-window -t mock-installer' "first dir closes the installer window" &&
+  assert_contains "$calls" "new-session -d -s second-ws -c $base2" "second dir gets its own new session" &&
+  assert_contains "$calls" "new-window -c $base2/repo-b -t second-ws:" "window opened in the second dir's session" &&
+  assert_contains "$calls" 'kill-window -t %8' "second dir closes its own placeholder window"
 }
 
 # ctdlm() with no git workspace within 2 levels of $PWD falls back to
@@ -146,5 +178,7 @@ run_tests \
   test_ctdl_outside_tmux_refuses \
   test_ctdl_inside_tmux_builds_layout \
   test_ctdlm_outside_tmux_starts_session \
+  test_ctdlm_outside_tmux_forwards_dirs \
   test_ctdlm_inside_tmux_opens_workspaces \
+  test_ctdlm_multiple_dirs_fans_out_to_new_sessions \
   test_ctdlm_falls_back_to_development_dir
