@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# Fake tmux binary for testing — the second adapter behind tmux-lib.sh.
+# Set env vars to control responses:
+#   MOCK_SESSION   — session name (default: test-session)
+#   MOCK_WIN       — window id (default: @1)
+#   MOCK_PPATH     — active pane's current path (default: /home/user/project)
+#   MOCK_PPATH2    — a SECOND pane in the same window (default: none). Lets a test
+#                    put the agent's cwd on a pane that is not the active one.
+#   MOCK_BADGE     — value returned by show-window-option, any option not
+#                    covered by MOCK_OPT_<name> below (default: "")
+#   MOCK_OPT_<opt> — value returned by show-window-option for that specific
+#                    option name (@ and - stripped/underscored), e.g.
+#                    MOCK_OPT_change_tracker_pane_id. Falls back to MOCK_BADGE.
+#   MOCK_SPLIT_PANE — pane_id printed by split-window (default: %2)
+#   MOCK_NEW_PANE   — pane_id printed by new-window (default: %9)
+# All calls are logged to /tmp/mock-tmux-calls (appended).
+
+printf 'tmux %s\n' "$*" >> /tmp/mock-tmux-calls
+
+case "$1" in
+  display-message)
+    # Return session\twin, or session, or win, or pane path, depending on -p format
+    fmt="${*: -1}"
+    case "$fmt" in
+      *session_name*window_id*) printf '%s\t%s\n' "${MOCK_SESSION:-test-session}" "${MOCK_WIN:-@1}" ;;
+      *pane_current_path*)      printf '%s\n' "${MOCK_PPATH:-/home/user/project}" ;;
+      *session_name*)           printf '%s\n' "${MOCK_SESSION:-test-session}" ;;
+      *window_id*)              printf '%s\n' "${MOCK_WIN:-@1}" ;;
+      *)                        printf '%s\n' "${MOCK_SESSION:-test-session}" ;;
+    esac
+    ;;
+  show-window-option)
+    opt="${*: -1}"; opt="${opt#@}"; opt="${opt//-/_}"
+    var="MOCK_OPT_${opt}"
+    printf '%s\n' "${!var:-${MOCK_BADGE:-}}"
+    ;;
+  split-window)
+    printf '%s\n' "${MOCK_SPLIT_PANE:-%2}"
+    ;;
+  new-window)
+    printf '%s\n' "${MOCK_NEW_PANE:-%9}"
+    ;;
+  list-windows)
+    printf '%s\t%s\n' "${MOCK_WIN:-@1}" "${MOCK_PPATH:-/home/user/project}"
+    ;;
+  list-panes)
+    printf '%s\t%s\n' "${MOCK_WIN:-@1}" "${MOCK_PPATH:-/home/user/project}"
+    [ -n "${MOCK_PPATH2:-}" ] && printf '%s\t%s\n' "${MOCK_WIN:-@1}" "$MOCK_PPATH2"
+    ;;
+  set-window-option|respawn-pane|rename-session|kill-window)
+    # Already logged above; exit 0
+    ;;
+esac
+exit 0

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Fake npm binary — stands in for `npm exec ccusage -- <subcommand> --json`.
+# Set MOCK_CCUSAGE_JSON to override the payload; defaults cover both
+# claude_cost_weekly's `daily` shape and claude_cost_session's `blocks` shape.
+if [ -n "${MOCK_CCUSAGE_JSON:-}" ]; then
+  printf '%s' "$MOCK_CCUSAGE_JSON"
+  exit 0
+fi
+
+case "$4" in
+  daily)  printf '{"daily":[{"totalCost":1.5,"totalTokens":1000},{"totalCost":0.5,"totalTokens":500}]}' ;;
+  blocks) printf '{"blocks":[{"costUSD":0.25,"totalTokens":200}]}' ;;
+esac

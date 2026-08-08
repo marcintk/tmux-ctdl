@@ -1,0 +1,51 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          { "type": "command", "command": "~/.config/tmux/workspace/ctdl.sh wintab-badge CLEAR" }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          { "type": "command", "command": "~/.config/tmux/workspace/ctdl.sh wintab-badge RUNNING" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          { "type": "command", "command": "~/.config/tmux/workspace/ctdl.sh wintab-badge DONE" },
+          { "type": "command", "command": "~/.config/tmux/workspace/ctdl.sh agent-footer" }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          { "type": "command", "command": "~/.config/tmux/workspace/ctdl.sh wintab-badge DONE" }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "matcher": "",
+        "hooks": [
+          { "type": "command", "command": "~/.config/tmux/workspace/ctdl.sh wintab-badge PERMISSION" }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.config/tmux/workspace/ctdl.sh agent-push-usage",
+    "padding": 0,
+    "refreshInterval": 5
+  }
+}

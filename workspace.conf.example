@@ -1,0 +1,41 @@
+# ─── Active agent ─────────────────────────────────────────────────────────────
+# Change CODING_AGENT to switch agents. Each agent module (adapter/adapter-<id>.sh)
+# declares its own identity — AGENT_LABEL, AGENT_CMD, AGENT_COST_* — as soon as
+# it's sourced below. Nothing agent-specific lives in this file.
+#
+# workspace_boot's `agent` lib name resolves this to
+# $WORKSPACE_HOME/adapter/adapter-<CODING_AGENT>.sh on its own (workspace-boot.sh)
+# — set CODING_AGENT_MODULE here only to point at a module that isn't at that
+# path (a test stub, a module outside this repo).
+CODING_AGENT="claude"      # claude | copilot
+
+# ─── Editor / change tracker ──────────────────────────────────────────────────
+EDITOR_CMD="nvim"
+CHANGE_TRACKER_CMD="lazygit"
+
+# ─── Timing ───────────────────────────────────────────────────────────────────
+USAGE_REFRESH="1m"     # min interval between expensive usage refetches: Claude's
+                        # $-cost cache, and a pull-based agent's whole collect
+WINTAB_LIVE_GRACE=5
+
+# STATE_MAX_AGE (default 21600 = 6h): a state file older than this is reaped —
+# guards against a fresh tmux window inheriting a dead window's id (tmux's id
+# counter resets on a full SERVER restart) and picking up its stale file.
+# STATE_REAP_INTERVAL (default 600 = 10m): how often the per-second wintab
+# tick actually bothers checking.
+# STATE_MAX_AGE=21600
+# STATE_REAP_INTERVAL=600
+
+# ─── Palette and thresholds ───────────────────────────────────────────────────
+# Nothing here by default: every colour, threshold and model tier defaults at
+# the module that reads it, so the display is correct with this file empty and a
+# test needs no conf at all. Set a name below ONLY to override one — the reader
+# is where the default is written down:
+#
+#   BADGE_RUNNING BADGE_IDLE BADGE_DONE BADGE_BLOCKED   wintab/wintab-lib.sh
+#   COLOR_{DIM,SAFE,NOTICE,WARN,CRITICAL}_{BG,FG}       agentbar/agentbar-lib.sh
+#   THRESHOLD_{FLOOR,NOTICE,WARN,CRITICAL}              agentbar/agentbar-lib.sh
+#   THRESHOLD_CTX_{FLOOR,NOTICE,WARN,CRITICAL}          agentbar/agentbar-lib.sh
+#   SAFE_MODELS WARN_MODELS                             agentbar/agentbar-lib.sh
+#
+# Per-agent badge icons override the same way: <AGENT>_ICON_{RUNNING,IDLE,DONE,BLOCKED}.
