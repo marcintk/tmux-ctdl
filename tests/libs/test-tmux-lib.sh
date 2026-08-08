@@ -107,6 +107,29 @@ test_select_pane() {
   assert_contains "$(cat /tmp/mock-tmux-calls)" 'select-pane -t mock-pane' "select-pane args"
 }
 
+test_new_window_without_session_targets_current() {
+  setup
+  export MOCK_NEW_PANE=%9
+  local out; out=$(tmux_new_window /tmp/proj)
+  [ "$out" = %9 ] &&
+  assert_contains "$(cat /tmp/mock-tmux-calls)" 'new-window -c /tmp/proj -P -F #{pane_id}' "no -t flag when session omitted"
+}
+
+test_new_window_with_session_targets_it() {
+  setup
+  export MOCK_NEW_PANE=%9
+  tmux_new_window /tmp/proj my-session
+  assert_contains "$(cat /tmp/mock-tmux-calls)" 'new-window -c /tmp/proj -t my-session:' "session:  window target"
+}
+
+test_new_session_returns_first_pane_id() {
+  setup
+  export MOCK_NEW_SESSION_PANE=%8
+  local out; out=$(tmux_new_session my-session /tmp/proj)
+  [ "$out" = %8 ] &&
+  assert_contains "$(cat /tmp/mock-tmux-calls)" 'new-session -d -s my-session -c /tmp/proj' "detached session args"
+}
+
 # Outside tmux every call must be a silent no-op, not an error on the status bar.
 test_silent_without_tmux() {
   rm -f /tmp/mock-tmux-calls
@@ -129,4 +152,7 @@ run_tests \
   test_split_window_returns_new_pane_id \
   test_send_keys_types_and_enters \
   test_select_pane \
+  test_new_window_without_session_targets_current \
+  test_new_window_with_session_targets_it \
+  test_new_session_returns_first_pane_id \
   test_silent_without_tmux

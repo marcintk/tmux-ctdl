@@ -72,11 +72,24 @@ tmux_send_keys() { tmux send-keys -t "$1" "$2" C-m 2>/dev/null; }
 # tmux_select_pane <target>
 tmux_select_pane() { tmux select-pane -t "$1" 2>/dev/null; }
 
-# tmux_new_window <cwd> — new window in the current session. Prints its pane_id.
-tmux_new_window() { tmux new-window -c "$1" -P -F '#{pane_id}' 2>/dev/null; }
+# tmux_new_window <cwd> [session] — new window, in <session> if given, else the
+# current session. Prints its pane_id.
+tmux_new_window() {
+  local cwd=$1 session=${2:-}
+  if [ -n "$session" ]; then
+    tmux new-window -c "$cwd" -t "${session}:" -P -F '#{pane_id}' 2>/dev/null
+  else
+    tmux new-window -c "$cwd" -P -F '#{pane_id}' 2>/dev/null
+  fi
+}
 
 # tmux_rename_session <name>
 tmux_rename_session() { tmux rename-session "$1" 2>/dev/null; }
+
+# tmux_new_session <name> <cwd> — a fresh DETACHED session (server keeps
+# running, no client attaches). Prints its first window's pane_id, same shape
+# as tmux_new_window, so both feed layout_open_workspaces callers identically.
+tmux_new_session() { tmux new-session -d -s "$1" -c "$2" -P -F '#{pane_id}' 2>/dev/null; }
 
 # tmux_kill_window <target>
 tmux_kill_window() { tmux kill-window -t "$1" 2>/dev/null; }

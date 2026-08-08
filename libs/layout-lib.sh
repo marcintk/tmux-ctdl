@@ -111,3 +111,17 @@ layout_open_workspaces() {
   while IFS= read -r dir; do [ -n "$dir" ] || continue; pane=$(tmux_new_window "$dir"); tmux_send_keys "$pane" "$cmd"; done < <(layout_workspace_dirs "$base")
   tmux_kill_window "$installer"
 }
+
+# layout_open_workspaces_new_session <base> <cmd> — same as
+# layout_open_workspaces, but for a SECOND (or third, ...) base dir passed to
+# ctdlm: rather than take over the calling session, it opens a brand-new
+# detached one (named after <base>, same as layout_open_workspaces names the
+# current one) and populates it. Lets one ctdlm call fan out across multiple
+# workspace roots, one tmux session per root.
+layout_open_workspaces_new_session() {
+  local base=$1 cmd=$2 name installer dir pane
+  name="$(basename "$base" | tr '.:' '--')"
+  installer=$(tmux_new_session "$name" "$base")
+  while IFS= read -r dir; do [ -n "$dir" ] || continue; pane=$(tmux_new_window "$dir" "$name"); tmux_send_keys "$pane" "$cmd"; done < <(layout_workspace_dirs "$base")
+  tmux_kill_window "$installer"
+}

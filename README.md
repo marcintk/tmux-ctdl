@@ -45,6 +45,9 @@ tmux status-formats, Claude Code hooks.
 `ctdl` (build 3-pane layout: agent / change-tracker / terminal) and `ctdlm`
 ("multi" — one `ctdl` window per git workspace under the current dir, or
 `~/Development`; works outside tmux too, re-invokes itself inside a new session).
+Give `ctdlm` more than one dir (`ctdlm ~/Development ~/Development/ha`) to fan
+out across multiple tmux SESSIONS, one per dir, each with one window per git
+workspace inside it.
 
 **Executed** (`tmux-ctdl.sh <verb> [args]`):
 
