@@ -38,7 +38,7 @@ Run `ctdl` in a tmux window and it splits into three panes:
 ## Install
 
 ```sh
-git clone <this-repo> <DIR>
+git clone https://github.com/marcintk/tmux-ctdl.git <DIR>
 cd <DIR>
 ./install.sh
 ```
