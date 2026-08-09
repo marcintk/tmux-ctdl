@@ -62,15 +62,6 @@ install, then left alone on every reinstall after):
 - colours/thresholds for the status bar — every one has a default, only
   name the ones you want different
 
-## Usage
-
-- `ctdl` — build the 3-pane layout in the current tmux window
-- `ctdlm [dir...]` — one `ctdl` window per git repo under a dir (current dir,
-  or `~/Development` if it has none); multiple dirs each get their own
-  session. Works outside tmux too — starts one and re-enters.
-
-Keybindings are in the pane table under [What you get](#what-you-get).
-
 ## How data flows
 
 ```mermaid
