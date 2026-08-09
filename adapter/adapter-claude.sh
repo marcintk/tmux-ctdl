@@ -23,35 +23,29 @@ claude_parse_shared() {
   jq -r 'if .rate_limits == null then empty else [["session", (.rate_limits.five_hour.used_percentage // "")], ["weekly", (.rate_limits.seven_day.used_percentage // "")], ["five_reset", (.rate_limits.five_hour.resets_at // 9999999999)], ["week_reset", (.rate_limits.seven_day.resets_at // 9999999999)], ["model", (.model.display_name // "")], ["effort", (.effort.level // "")]][] | @tsv end' 2>/dev/null
 }
 
-# Reject an OLDER rate-limit block than what's on disk (out-of-order delivery
-# across a block boundary). 9999999999 sentinel → always allow overwriting.
+# `rate` is account-wide — ONE file, every Claude pane on the machine writes
+# into it (see state-lib.sh), not one per window. Each write is already
+# atomic-whole: write_rate hands _state_write one blob (session+weekly+resets
+# together), landing via tmp+rename, so a reader NEVER sees a torn mix of old
+# session with new weekly.
 #
-# Within the SAME block, `rate` is now account-wide (one file, every window
-# pushes into it — see state-lib.sh), and Claude Code re-sends each window's
-# own cached session% on every 5s statusLine tick whether or not it has
-# talked to the API since. An idle window's stale-but-unchanged cache and a
-# busy window's freshly-higher real figure then fight over the same file
-# every few seconds, flickering between the two. A small same-block DROP is
-# that idle echo, not new information — reject it. A big drop is Claude
-# Code's rare spike-correction bug (an erroneous ~100% self-corrected down to
-# the real figure) and must still go through, which is why this isn't a flat
-# "never decreases" rule.
+# No freshness check beyond that: any payload that actually carries a
+# five_reset (i.e. rate_limits was present at all) is written, whatever the
+# session/weekly values say, whichever pane sent it, in whichever order
+# panes' ~5s statusLine ticks happen to land. Per-explicit direction: no
+# magnitude threshold, no monotonic floor — those were tried and reverted.
+#
+# Known consequence, not a bug: with N Claude panes open (one per repo), each
+# replaying its own last-cached session%/weekly% on every tick regardless of
+# activity, the displayed value round-robins between panes' distinct cached
+# readings until they converge. Reproduced live with 8 panes open before this
+# was simplified back down to this single check.
 claude_incoming_stale() {
   local agent=$1 incoming=$2
-  local -A NEW OLD
+  local -A NEW
   kv_fill NEW <<<"$incoming"
-  state_get_kv OLD rate "$agent"
-  local new_five="${NEW[five_reset]:-}"
-  local old_five="${OLD[five_reset]:-9999999999}"
-  [ "$old_five" = "9999999999" ] && return 1
-  [ -z "$new_five" ] && return 1
-  [ "$new_five" -lt "$old_five" ] 2>/dev/null && return 0
-  if [ "$new_five" = "$old_five" ]; then
-    local new_session="${NEW[session]:-0}" old_session="${OLD[session]:-0}"
-    awk -v n="$new_session" -v o="$old_session" \
-      'BEGIN{ exit !(n < o && (o - n) <= 30) }' && return 0
-  fi
-  return 1
+  [ -n "${NEW[five_reset]:-}" ] && [ "${NEW[five_reset]}" != "9999999999" ] && return 1
+  return 0
 }
 
 # The three keys agentbar-lib's render_ctx reads, and no more. cache_write,

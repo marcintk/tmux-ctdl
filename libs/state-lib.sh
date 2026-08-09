@@ -18,11 +18,15 @@
 #                                              regardless of which window's
 #                                              process last reported it, so one
 #                                              file, not one per window.
-#   per window     shared  <agent> <sess> <win>   that window's own model/effort
-#                  ctx     <agent> <sess> <win>   that window's context line
-#                  phase   <agent> <sess> <win>   wintab badge phase (wintab-lib)
-#                  cleared <agent> <sess> <win>   marker: /clear seen while running
-#                  live    <agent> <sess> <win>   marker: agent last seen live
+#   per window     shared    <agent> <sess> <win>   that window's own model/effort
+#                  ctx       <agent> <sess> <win>   that window's context line
+#                  rate_seen <agent> <sess> <win>   last rate_kv THIS window pushed —
+#                                                    dedupes its own repeated statusLine
+#                                                    ticks so an unchanged reading never
+#                                                    touches the shared `rate` file
+#                  phase     <agent> <sess> <win>   wintab badge phase (wintab-lib)
+#                  cleared   <agent> <sess> <win>   marker: /clear seen while running
+#                  live      <agent> <sess> <win>   marker: agent last seen live
 #   per slot       cost    <agent> <slot>     cached $-cost for one cost slot
 #                  tokens  <agent> <slot>     cached token total for one usage row
 #                  since   <agent> <slot>     cached anchor date for a cumulative slot (lifetime)
@@ -59,6 +63,7 @@ _state_path() {
     rate) printf '%s/agent-rate-%s' "$tmp" "$agent" ;;
     shared) printf '%s/agent-shared-%s-%s-%s' "$tmp" "$agent" "${k1:-_}" "${k2:-0}" ;;
     ctx) printf '%s/agent-ctx-%s-%s-%s' "$tmp" "$agent" "${k1:-_}" "${k2:-0}" ;;
+    rate_seen) printf '%s/agent-rate-seen-%s-%s-%s' "$tmp" "$agent" "${k1:-_}" "${k2:-0}" ;;
     cost) printf '%s/agent-cost-%s-%s' "$tmp" "${k1,,}" "$agent" ;;
     tokens) printf '%s/agent-tokens-%s-%s' "$tmp" "${k1,,}" "$agent" ;;
     since) printf '%s/agent-since-%s-%s' "$tmp" "${k1,,}" "$agent" ;;

@@ -151,6 +151,71 @@ write_rate() {
   (_write_rate_locked "$agent" "$content") 9>"$(state_lockfile "agent-rate-lock-${agent}")"
 }
 
+# write_rate_if_new <agent> <content> — dedupes THIS window's own repeated
+# statusLine ticks before they ever reach the shared account-wide file. A
+# push-based agent (Claude) resends a pane's last-known reading every ~5s
+# tick whether or not it talked to the API since; with N panes open, each
+# doing this independently, an unchanged reading hitting the shared file is
+# pure noise — worse, it's what a stale reading needs to round-robin against
+# a fresher one from another pane. Only a window whose OWN reading actually
+# changed since its last push writes through — "new data" is judged per
+# window, against that window's own history, since the shared file has no
+# memory of who wrote what last.
+#
+# tmux_here() failing (no window context — e.g. agent-pull-usage, which has
+# no per-window slot to compare against and is already globally rate-limited
+# by USAGE_REFRESH) skips the dedupe and always writes through, owner "-".
+#
+# The dedupe compares/stores the RAW incoming content — timestamp/owner are
+# stamped on only for the actual write, never fed back into the comparison,
+# or every tick would look "new" (different timestamp) and the dedupe would
+# never fire at all.
+write_rate_if_new() {
+  local agent=$1 content=$2
+  local here tsess win prev owner="-"
+  if here=$(tmux_here); then
+    IFS=$'\t' read -r tsess win <<<"$here"
+    prev=$(state_get rate_seen "$agent" "$tsess" "$win")
+    [ "$prev" = "$content" ] && return 0
+    state_put "$content" rate_seen "$agent" "$tsess" "$win"
+    local wname
+    wname=$(tmux_window_name "${TMUX_PANE:-}")
+    owner="pane@${TMUX_PANE:-$win}${wname:+-$wname}"
+  fi
+  local stamped
+  stamped="timestamp"$'\t'"$(date '+%Y-%m-%d %H:%M:%S')"$'\n'"owner"$'\t'"${owner}"$'\n'"${content}"$'\n'"$(_rate_reset_companions "$content")"
+  write_rate "$agent" "${stamped%$'\n'}"
+}
+
+# _rate_reset_companions <content> — for every key ending in _reset that
+# carries a real (non-sentinel) epoch, add a human-readable "<key>_at"
+# companion line, in the same format agentbar itself renders that field —
+# five_reset as "13:00", week_reset as "Fri@00:00" — so a person reading the
+# state file directly sees the same clock the status bar does, without doing
+# `date -d @...` by hand. The raw epoch fields are left untouched: consumers
+# (claude_usage_rows' until_at countdown, the sentinel check) need the number,
+# not the string.
+_rate_reset_companions() {
+  local content=$1
+  local -A KV
+  kv_fill KV <<<"$content"
+  local k out=""
+  for k in "${!KV[@]}"; do
+    case "$k" in
+      five_reset | week_reset)
+        local v="${KV[$k]}"
+        [ -n "$v" ] && [ "$v" != "9999999999" ] || continue
+        local fmt
+        [ "$k" = five_reset ] && fmt='+%H:%M' || fmt='+%a@%H:%M'
+        local hm
+        hm=$(date -d "@${v}" "$fmt" 2>/dev/null) || continue
+        out+="${k}_at"$'\t'"${hm}"$'\n'
+        ;;
+    esac
+  done
+  printf '%s' "${out%$'\n'}"
+}
+
 # write_ctx <agent> <content> <model> <effort> — content is key<TAB>value lines
 # (as produced by <agent>_parse_context); model/effort come from the shared read
 # so a window shows the model it was actually run with. Which window is
@@ -315,7 +380,7 @@ adapter_main() {
       esac
     done
     write_shared "$agent" "$mw_kv"
-    [ -n "$rate_kv" ] && write_rate "$agent" "$rate_kv"
+    [ -n "$rate_kv" ] && write_rate_if_new "$agent" "$rate_kv"
   fi
 
   local ctx_kv

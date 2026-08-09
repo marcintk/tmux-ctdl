@@ -64,6 +64,106 @@ test_write_rate_no_hook_writes_normally() {
   assert_contains "${F[session]}" "NEW" "no hook → state written"
 }
 
+# write_rate_if_new dedupes a WINDOW repeating its own unchanged reading — the
+# ~5s statusLine tick that fires whether or not the pane talked to the API
+# since. A second, different window's fresher write on the shared file must
+# survive an idle window's repeat of what it already sent once.
+test_write_rate_if_new_dedupes_repeat_from_same_window() {
+  setup
+  export TMUX_PANE=mock-pane
+  write_rate_if_new faketest "$(printf 'session\t10\n')"
+  printf 'session\t99\n' >"$AGENT_TMP_DIR/agent-rate-faketest"
+  write_rate_if_new faketest "$(printf 'session\t10\n')"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
+  assert_contains "${F[session]}" "99" "repeat of unchanged reading did not clobber another window's write"
+}
+
+# A genuine change in THIS window's own reading — the pane actually talked to
+# the API and got a new figure — writes through.
+test_write_rate_if_new_writes_on_change() {
+  setup
+  export TMUX_PANE=mock-pane
+  write_rate_if_new faketest "$(printf 'session\t10\n')"
+  write_rate_if_new faketest "$(printf 'session\t20\n')"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
+  assert_contains "${F[session]}" "20" "changed reading from same window writes through"
+}
+
+# No resolvable pane (e.g. agent-pull-usage, no TMUX_PANE) — nothing to dedupe
+# against, so it always writes, same as write_rate on its own.
+test_write_rate_if_new_no_pane_always_writes() {
+  setup
+  unset TMUX_PANE
+  write_rate_if_new faketest "$(printf 'session\t10\n')"
+  write_rate_if_new faketest "$(printf 'session\t10\n')"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
+  assert_contains "${F[session]}" "10" "no pane context still writes"
+}
+
+# write_rate_if_new stamps every actual write with WHEN and WHO — not fed
+# back into the dedupe comparison itself (see the function comment), just
+# recorded for a human reading the file to answer "who wrote this, and when?"
+# without a live process trace. timestamp is human-readable (not a raw
+# epoch); owner names both the pane id and the window it lives in, so two
+# panes with the same window id in different sessions still read apart.
+test_write_rate_if_new_stamps_timestamp_and_owner() {
+  setup
+  export TMUX_PANE=mock-pane MOCK_WIN_NAME=tmux-ctdl
+  write_rate_if_new faketest "$(printf 'session\t10\n')"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
+  [[ "${F[timestamp]}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}\ [0-9]{2}:[0-9]{2}:[0-9]{2}$ ]] &&
+    assert_contains "${F[owner]}" "pane@mock-pane-tmux-ctdl" "owner names pane and window"
+}
+
+# timestamp/owner must be the first two lines written — even though the
+# actual reset lines are read out by key, not position (assert_contains a few
+# lines up doesn't care), the file is meant to be skimmed by a human first.
+test_write_rate_if_new_stamps_timestamp_and_owner_first() {
+  setup
+  export TMUX_PANE=mock-pane
+  write_rate_if_new faketest "$(printf 'session\t10\n')"
+  local first second
+  first=$(sed -n '1p' "$AGENT_TMP_DIR/agent-rate-faketest" | cut -f1)
+  second=$(sed -n '2p' "$AGENT_TMP_DIR/agent-rate-faketest" | cut -f1)
+  [ "$first" = "timestamp" ] && [ "$second" = "owner" ]
+}
+
+test_write_rate_if_new_no_pane_stamps_dash_owner() {
+  setup
+  unset TMUX_PANE
+  write_rate_if_new faketest "$(printf 'session\t10\n')"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
+  assert_contains "${F[owner]}" "-" "no pane context stamps the fallback owner"
+}
+
+# Claude's five_reset/week_reset each get a human-readable "_at" companion,
+# in the same format agentbar itself renders — the raw epoch is untouched
+# (until_at's countdown math needs the number).
+test_write_rate_if_new_adds_reset_companions() {
+  setup
+  export TMUX_PANE=mock-pane
+  write_rate_if_new faketest "$(printf 'five_reset\t1785726000\nweek_reset\t1785900000\n')"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
+  assert_contains "${F[five_reset]}" "1785726000" "raw five_reset kept" &&
+    assert_contains "${F[five_reset_at]}" "$(date -d '@1785726000' '+%H:%M')" "five_reset_at matches agentbar's own format" &&
+    assert_contains "${F[week_reset_at]}" "$(date -d '@1785900000' '+%a@%H:%M')" "week_reset_at matches agentbar's own format"
+}
+
+test_write_rate_if_new_omits_reset_companion_for_sentinel() {
+  setup
+  export TMUX_PANE=mock-pane
+  write_rate_if_new faketest "$(printf 'five_reset\t9999999999\n')"
+  local -A F
+  kv_fill F <"$AGENT_TMP_DIR/agent-rate-faketest"
+  [ -z "${F[five_reset_at]:-}" ]
+}
+
 # write_shared needs a resolvable pane too — same "nowhere" rule as write_ctx.
 test_write_shared_no_pane_skips() {
   setup
@@ -309,6 +409,14 @@ run_tests \
   test_write_shared_layout \
   test_write_rate_stale_hook_skips \
   test_write_rate_no_hook_writes_normally \
+  test_write_rate_if_new_dedupes_repeat_from_same_window \
+  test_write_rate_if_new_writes_on_change \
+  test_write_rate_if_new_no_pane_always_writes \
+  test_write_rate_if_new_stamps_timestamp_and_owner \
+  test_write_rate_if_new_stamps_timestamp_and_owner_first \
+  test_write_rate_if_new_no_pane_stamps_dash_owner \
+  test_write_rate_if_new_adds_reset_companions \
+  test_write_rate_if_new_omits_reset_companion_for_sentinel \
   test_write_ctx_no_pane_skips \
   test_write_ctx_writes_file \
   test_write_ctx_unresolvable_pane_skips \

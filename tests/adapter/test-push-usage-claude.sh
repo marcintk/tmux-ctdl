@@ -22,7 +22,7 @@ RATE_FILE="$AGENT_TMP_DIR/agent-rate-claude"
 SHARED_FILE="$AGENT_TMP_DIR/agent-shared-claude-test-session-@1"
 
 setup() {
-  rm -f "$RATE_FILE" "$SHARED_FILE" "$AGENT_TMP_DIR"/agent-ctx-claude-* /tmp/mock-tmux-calls
+  rm -f "$RATE_FILE" "$SHARED_FILE" "$AGENT_TMP_DIR"/agent-ctx-claude-* "$AGENT_TMP_DIR"/agent-rate-seen-claude-* /tmp/mock-tmux-calls
   export TMUX_PANE=mock-pane
   export PATH="$FIXTURES:$PATH"
   export MOCK_SESSION=test-session MOCK_WIN=@1
@@ -128,8 +128,10 @@ test_real_resets_overwrite_sentinel() {
   assert_contains "${F[five_reset]}" "1737100000" "real resets_at overwrites sentinel"
 }
 
-# Older incoming data (five_reset in the past vs on disk) must NOT overwrite.
-test_stale_incoming_does_not_overwrite() {
+# Any payload carrying a real (non-sentinel) five_reset overwrites what's on
+# disk outright now — including an "older" one. claude_incoming_stale has no
+# ordering or value check left, per explicit direction; see its comment.
+test_incoming_with_real_five_reset_always_overwrites() {
   setup
   printf 'session\t30.5\nweekly\t20.1\nfive_reset\t1737100000\nweek_reset\t1737200000\n' \
     >"$RATE_FILE"
@@ -138,7 +140,7 @@ test_stale_incoming_does_not_overwrite() {
   printf '%s' "$older" | bash "$SCRIPTS/tmux-ctdl.sh" agent-push-usage
   local -A F
   kv_fill F <"$RATE_FILE"
-  assert_contains "${F[five_reset]}" "1737100000" "stale incoming (older five_reset) kept old"
+  assert_contains "${F[five_reset]}" "1737000000" "any real five_reset overwrites, even an older one"
 }
 
 run_tests \
@@ -151,4 +153,4 @@ run_tests \
   test_silent_on_empty_input \
   test_null_resets_at_writes_sentinel \
   test_real_resets_overwrite_sentinel \
-  test_stale_incoming_does_not_overwrite
+  test_incoming_with_real_five_reset_always_overwrites
