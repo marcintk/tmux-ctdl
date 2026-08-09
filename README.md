@@ -19,6 +19,8 @@ Run `ctdl` in a tmux window and it splits into three panes:
 └─────────────┴────────────────┘
 ```
 
+**Key bindings**
+
 | Key | Pane | Runs | Effect |
 |---|---|---|---|
 | prefix + C | Left | `AGENT_CMD` (`claude`) | kill + restart the pane |
