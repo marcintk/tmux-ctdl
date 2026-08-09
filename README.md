@@ -10,7 +10,9 @@ doing.
 Run `ctdl` in a tmux window and it splits into three panes:
 
 ```
- mysession   1:api ●  2:web            ← wintab: window name + badge
+──────────────────────────────────────── wintab
+ mysession   1:api ●  2:web
+────────────────────────────────────────
 ┌─────────────┬────────────────┐
 │             │  change        │
 │  coding     │  tracker       │
@@ -18,7 +20,9 @@ Run `ctdl` in a tmux window and it splits into three panes:
 │  (claude |  ├────────────────┤
 │  copilot)   │  terminal      │
 └─────────────┴────────────────┘
- claude  ctx 42%  session 18%  $3.20     ← agentbar
+──────────────────────────────────────── agentbar
+ claude  ctx 42%  session 18%  $3.20
+────────────────────────────────────────
 ```
 
 - wintab (window name badge): running / waiting on you / done
