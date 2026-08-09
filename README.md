@@ -19,17 +19,14 @@ Run `ctdl` in a tmux window and it splits into three panes:
 └─────────────┴────────────────┘
 ```
 
-- **Left**: your coding agent (`AGENT_CMD`, `claude` by default)
-- **Top right**: change tracker (`CHANGE_TRACKER_CMD`, `lazygit` by default)
-- **Bottom right**: plain terminal
+| Pane | Runs | Key | Effect |
+|---|---|---|---|
+| Left | `AGENT_CMD` (`claude`) | prefix + C | kill + restart the pane |
+| Top right | `CHANGE_TRACKER_CMD` (`lazygit`) ↔ `EDITOR_CMD` (`nvim`) | prefix + Space | respawn-swap in place, not a new split |
+| Bottom right | plain terminal | — | — |
 
-**prefix + Space** respawns the top-right pane in place (`respawn-pane -k`),
-flipping it between `CHANGE_TRACKER_CMD` and `EDITOR_CMD` (`nvim` by
-default) — it's a swap, not a new split. Left/bottom-right panes untouched.
-A per-window flag (`@change_tracker_state`) remembers which one is showing.
-
-**prefix + C** kills and restarts the left pane with `AGENT_CMD` — for when
-the agent process wedges.
+A per-window flag (`@change_tracker_state`) remembers which of tracker/editor
+is showing.
 
 The outer status bar shows the agent's context window, usage/cost, and (for
 Claude) a running lifetime total. Each window also gets a small badge next to
@@ -80,9 +77,8 @@ install, then left alone on every reinstall after):
 - `ctdlm [dir...]` — one `ctdl` window per git repo under a dir (current dir,
   or `~/Development` if it has none); multiple dirs each get their own
   session. Works outside tmux too — starts one and re-enters.
-- **prefix + Space** — swap the top-right pane between change tracker and
-  editor
-- **prefix + C** — restart the agent pane
+
+Keybindings are in the pane table under [What you get](#what-you-get).
 
 ## How data flows
 
