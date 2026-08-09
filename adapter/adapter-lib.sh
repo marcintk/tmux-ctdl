@@ -27,7 +27,7 @@
 #       parse_shared/parse_context read (a sqlite query, a process probe, ...).
 #       Push-based agents (Claude) omit it — their payload already arrives on
 #       stdin via tmux-ctdl.sh agent-push-usage. Pull-based agents (Copilot) are
-#       driven by tmux-ctdl.sh agent-pull-usage, called off the wintab-tick, rate-
+#       driven by tmux-ctdl.sh agent-pull-usage, called off the agent-refresh, rate-
 #       limited by USAGE_REFRESH so a per-second tick doesn't hammer the store.
 #   <agent>_incoming_stale <agent> <incoming-shared-value>
 #       Return 0 (true) to SKIP the write because incoming data is older than

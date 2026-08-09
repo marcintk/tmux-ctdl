@@ -13,7 +13,7 @@
 # a verb:
 #   tmux-ctdl.sh tracker-editor-toggle <pane_id>  tmux Space      — tracker <-> editor
 #   tmux-ctdl.sh agent-respawn <pane_id>          tmux prefix-C   — restart agent pane
-#   tmux-ctdl.sh wintab-tick <session>            status-format[0]— poll wintab badges
+#   tmux-ctdl.sh agent-refresh <session>          status-format[0]— poll wintab badges
 #   tmux-ctdl.sh agentbar <sess> <win>        status-format[1]   — render outer bar
 #   tmux-ctdl.sh wintab-badge <RUNNING|CLEAR|DONE|PERMISSION>
 #                                        Claude Code hooks  — set window badge
@@ -21,7 +21,7 @@
 #                                        (agent pushes a JSON payload on stdin)
 #   tmux-ctdl.sh agent-footer                 Claude Stop hook   — end-of-turn usage
 #                                        line (stdin JSON, answers on stdout)
-#   tmux-ctdl.sh agent-pull-usage             wintab-tick        — write usage state
+#   tmux-ctdl.sh agent-pull-usage              agent-refresh      — write usage state
 #                                        (agent has no hook; adapter-lib polls
 #                                        <agent>_collect, rate-limited by
 #                                        USAGE_REFRESH)
@@ -116,9 +116,9 @@ _ctdl_main() {
       layout_respawn_agent "$1" "$AGENT_CMD" "$1"
       ;;
 
-    wintab-tick)
+    agent-refresh)
       _ctdl_boot wintab adapter agent state
-      wintab_status_tick "$CODING_AGENT" "$1"
+      wintab_agent_refresh "$CODING_AGENT" "$1"
       ;;
 
     wintab-badge)
