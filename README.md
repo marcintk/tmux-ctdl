@@ -121,7 +121,7 @@ graph TD
     adapterCopilot["adapter-copilot<br/>parse (pulled)"]:::adapter
     state[("state files<br/>/tmp, atomic write")]:::store
     subgraph render["render"]
-      agentbar["agentbar<br/>own status bar"]:::out
+      agentbar["agentbar<br/>(status data)"]:::out
       wintab["wintab<br/>(badge)"]:::out
     end
   end
