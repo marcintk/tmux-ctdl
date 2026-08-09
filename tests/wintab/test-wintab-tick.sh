@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tmux-ctdl.sh wintab-tick — the poll entry point, end to end. Phase is seeded through
+# tmux-ctdl.sh agent-refresh — the poll entry point, end to end. Phase is seeded through
 # state-lib rather than by touching files, and badges are read back from the
 # fixtures/tmux call log.
 DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
@@ -43,13 +43,13 @@ setup() {
 }
 
 _seed() { state_put "$1" phase claude test-session @1; }
-_tick() { bash "$SCRIPTS/tmux-ctdl.sh" wintab-tick test-session; }
+_tick() { bash "$SCRIPTS/tmux-ctdl.sh" agent-refresh test-session; }
 _calls() { cat /tmp/mock-tmux-calls; }
 _phase() { state_get phase claude test-session @1; }
 
 test_no_session_exits_silently() {
   setup
-  assert_empty "$(bash "$SCRIPTS/tmux-ctdl.sh" wintab-tick 2>&1)" "no output without session arg"
+  assert_empty "$(bash "$SCRIPTS/tmux-ctdl.sh" agent-refresh 2>&1)" "no output without session arg"
 }
 
 test_live_process_sets_pulse() {
@@ -131,8 +131,8 @@ test_idle_window_makes_no_tmux_writes() {
   assert_empty "$(_calls | grep set-window-option)" "no badge writes when nothing changes"
 }
 
-# wintab_status_tick composes wintab_tick + adapter_pull_usage + state_reap_stale
-# (see tmux-ctdl.sh's wintab-tick arm) — the reap marker existing after one CLI
+# wintab_agent_refresh composes wintab_tick + adapter_pull_usage + state_reap_stale
+# (see tmux-ctdl.sh's agent-refresh arm) — the reap marker existing after one CLI
 # tick is the only externally visible proof the composed call, not just the
 # badge poll alone, actually ran.
 test_tick_runs_full_status_cycle() {

@@ -98,10 +98,9 @@ window badges (next section) only work for Claude.
 by default), written atomically. No tmux user options, no sockets. A reaper
 sweeps stale files every 10 minutes.
 
-**The scheduler.** tmux's own `status-interval 1` fires a tick once a
-second. That tick: advances the badge animation, pulls Copilot usage
-(throttled to once a minute), and reaps stale state (throttled to once per
-10 minutes).
+**agent-refresh.** tmux's own `status-interval 1` fires this verb once a
+second. It advances the badge animation, pulls Copilot usage (throttled to
+once a minute), and reaps stale state (throttled to once per 10 minutes).
 
 **Rendering out.** The status-right segment (agentbar) re-reads state and
 repaints every second: usage, cost, context gauge. Window badges are written
@@ -114,7 +113,7 @@ graph TD
   copilot["Copilot CLI<br/>session-store.db"]:::src
 
   subgraph ctdl["tmux + ctdl"]
-    tick["scheduler tick<br/>status-interval 1s"]:::sched
+    tick["agent-refresh<br/>status-interval 1s"]:::sched
     adapterClaude["adapter-claude<br/>parse"]:::adapter
     adapterCopilot["adapter-copilot<br/>parse (pulled)"]:::adapter
     state[("state files<br/>/tmp, atomic write")]:::store

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The wintab badge state machine. ONE machine, two entry verbs: tmux-ctdl.sh wintab-badge
-# feeds it agent events, tmux-ctdl.sh wintab-tick feeds it liveness on the status tick.
+# feeds it agent events, tmux-ctdl.sh agent-refresh feeds it liveness on the status tick.
 # Both go through wintab_apply, so neither decides the badge behind the other's
 # back — the phase is stored state, not "whatever is currently in the tmux option".
 #
@@ -228,12 +228,12 @@ wintab_tick() {
   done < <(wintab_live_windows "$panes" "$live") # KCOV_TRACER_LOST
 }
 
-# wintab_status_tick <agent> <tsess> — the whole once-a-second status-format
+# wintab_agent_refresh <agent> <tsess> — the whole once-a-second status-format
 # cycle: badge poll, then the usage pull a pull-based agent has no hook for,
-# then the state reaper. tmux-ctdl.sh's wintab-tick verb calls this and nothing
+# then the state reaper. tmux-ctdl.sh's agent-refresh verb calls this and nothing
 # else, keeping the "one arm, one lib verb" rule the router documents for
 # itself — this function, not the router, owns the order and why it's safe.
-wintab_status_tick() {
+wintab_agent_refresh() {
   local agent=$1 tsess=$2 now
   now=$(date +%s)
   wintab_tick "$agent" "$tsess"
