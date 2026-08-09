@@ -113,3 +113,10 @@ graph TD
 bash tests/run-tests.sh          # discovers every test-*.sh under tests/
 bash tests/run-coverage.sh       # kcov, writes .coverage/
 ```
+
+Local git hooks (pre-commit: shfmt + shellcheck + tests; pre-push: 100% coverage
+gate) live in `.githooks/` — enable once per clone:
+
+```sh
+git config core.hooksPath .githooks
+```
