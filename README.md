@@ -122,5 +122,5 @@ bash tests/run-coverage.sh       # kcov, writes .coverage/
 Enable once per clone:
 
 ```sh
-git config core.hooksPath .githooks
+./dev_setup.sh
 ```
