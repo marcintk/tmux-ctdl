@@ -11,11 +11,9 @@ Run `ctdl` in a tmux window and it splits into three panes:
 
 ```
 +------------------------------------------+
-| wintab                                   |
-|  mysession   1:api ●  2:web              |
+|  mysession   1:api ●  2:web              |  <--- wintab
 | ──────────────────────────────────────── |
-| agentbar                                 |
-|  claude  ctx 42%  session 18%  $3.20     |
+|  claude  ctx 42%  session 18%  $3.20     |  <--- agentbar
 | ──────────────────────────────────────── |
 | ┌─────────────┬────────────────┐         |
 | │             │  change        │         |
