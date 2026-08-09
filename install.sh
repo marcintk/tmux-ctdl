@@ -16,14 +16,9 @@ MARK_END="# <<< ctdl <<<"
 log() { echo "ctdl-install: $*"; }
 
 deploy_workspace() {
-  mkdir -p "$TARGET"
-  rsync -a --delete --exclude='.git' --exclude='.coverage' \
-    --exclude='tmux-ctdl.conf' "$REPO_DIR"/ "$TARGET"/
-  if [[ ! -f "$TARGET/tmux-ctdl.conf" ]]; then
-    cp "$REPO_DIR/tmux-ctdl.conf" "$TARGET/tmux-ctdl.conf"
-    log "wrote $TARGET/tmux-ctdl.conf — edit CODING_AGENT if needed"
-  fi
-  log "deployed to $TARGET"
+  mkdir -p "$(dirname "$TARGET")"
+  ln -sfn "$REPO_DIR" "$TARGET"
+  log "linked $TARGET -> $REPO_DIR"
 }
 
 append_marked() {
@@ -33,7 +28,22 @@ append_marked() {
     return 0
   }
   if grep -qF "$MARK_START" "$file" 2>/dev/null; then
-    log "$file already has ctdl block, skipping"
+    local current
+    current=$(sed -n "/^${MARK_START}\$/,/^${MARK_END}\$/p" "$file")
+    local fresh
+    fresh=$(
+      echo "$MARK_START"
+      cat "$snippet"
+      echo "$MARK_END"
+    )
+    if [[ "$current" == "$fresh" ]]; then
+      log "$file ctdl block already up to date, skipping"
+    else
+      sed -i "/^${MARK_START}\$/,/^${MARK_END}\$/d" "$file"
+      # sed -i on macOS/BSD leaves a stray blank line differently than GNU; trim trailing blanks either way
+      printf '%s\n' "$fresh" >>"$file"
+      log "refreshed stale ctdl block in $file"
+    fi
     return 0
   fi
   {
