@@ -36,17 +36,19 @@ Run `ctdl` in a tmux window and it splits into three panes:
 ## Install
 
 ```sh
-git clone <this-repo> ~/Development/tmux-ctdl
-cd ~/Development/tmux-ctdl
+git clone <this-repo> <DIR>
+cd <DIR>
 ./install.sh
 ```
 
 Deploys to `$TMUX_CTDL_HOME` (default `~/.config/tmux/tmux-ctdl`), patches
 (idempotent, safe to re-run):
 
-- `~/.config/zsh/.zshrc`
-- `~/.config/tmux/tmux.conf`
-- `~/.claude/settings.json` (needs `jq`)
+| File | Note |
+|---|---|
+| `~/.config/zsh/.zshrc` | |
+| `~/.config/tmux/tmux.conf` | |
+| `~/.claude/settings.json` | needs `jq` |
 
 Raw snippets: [`integrations/`](integrations/). Per-agent detail:
 [`docs/agents/claude.md`](docs/agents/claude.md),
@@ -57,12 +59,12 @@ Raw snippets: [`integrations/`](integrations/). Per-agent detail:
 Edit `tmux-ctdl.conf` (deployed to `$TMUX_CTDL_HOME/tmux-ctdl.conf` on first
 install, then left alone on every reinstall after):
 
-- `CODING_AGENT` — `claude` or `copilot`
-- `AGENT_CMD` — the command that starts your agent in the left pane
-- `CHANGE_TRACKER_CMD` / `EDITOR_CMD` — what the top-right pane runs, and
-  what it swaps to on toggle
-- colours/thresholds for the status bar — every one has a default, only
-  name the ones you want different
+| Var | Meaning |
+|---|---|
+| `CODING_AGENT` | `claude` or `copilot` |
+| `AGENT_CMD` | command that starts your agent in the left pane |
+| `CHANGE_TRACKER_CMD` / `EDITOR_CMD` | what the top-right pane runs, and what it swaps to on toggle |
+| status bar colours/thresholds | every one has a default, only name the ones you want different |
 
 ## How data flows
 
