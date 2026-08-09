@@ -127,13 +127,13 @@ graph TD
   tick -- pull, throttled --> adapterCopilot
   copilot --> adapterCopilot
 
-  adapterClaude --> state
-  adapterCopilot --> state
-  claude -. hook event .-> wintab
+  adapterClaude -- "tokens, context %,<br/>session/weekly/lifetime cost" --> state
+  adapterCopilot -- "model, tokens" --> state
+  claude -. "phase (agent progress:<br/>running/blocked/done)" .-> wintab
 
   tick --> agentbar
   tick --> wintab
-  state --> agentbar
+  state -- reads current snapshot --> agentbar
 
   classDef src fill:#1e3a5f,stroke:#5b9bd5,color:#fff
   classDef adapter fill:#4a2f6b,stroke:#a97fd6,color:#fff
