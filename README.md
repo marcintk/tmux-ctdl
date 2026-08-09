@@ -24,17 +24,12 @@ Run `ctdl` in a tmux window and it splits into three panes:
 | prefix + C | Left | `AGENT_CMD` (`claude`) | kill + restart the pane |
 | prefix + Space | Top right | `CHANGE_TRACKER_CMD` (`lazygit`) ↔ `EDITOR_CMD` (`nvim`) | respawn-swap in place, not a new split |
 
-A per-window flag (`@change_tracker_state`) remembers which of tracker/editor
-is showing.
-
-The outer status bar shows the agent's context window, usage/cost, and (for
-Claude) a running lifetime total. Each window also gets a small badge next to
-its name showing whether the agent in it is running, waiting on you, or done.
-
-`ctdlm` ("multi") does this for every git repo under a directory at once —
-one `ctdl` window per repo. Give it more than one directory
-(`ctdlm ~/Development ~/Development/ha`) and each one gets its own tmux
-session, still one window per repo inside it.
+- status bar: agent's context window, usage/cost, (Claude) running lifetime
+  total
+- window badge: running / waiting on you / done
+- `ctdl` — one window, current repo
+- `ctdlm` — one window per git repo under a dir
+- `ctdlm <dir1> <dir2> ...` — one session per dir, still one window per repo
 
 ## Install
 
