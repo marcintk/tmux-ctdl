@@ -39,18 +39,15 @@ cd ~/Development/tmux-ctdl
 ./install.sh
 ```
 
-Deploys this repo to `$TMUX_CTDL_HOME` (default `~/.config/tmux/tmux-ctdl`)
-and appends integration snippets — marked, idempotent, safe to re-run — to:
+Deploys to `$TMUX_CTDL_HOME` (default `~/.config/tmux/tmux-ctdl`), patches
+(idempotent, safe to re-run):
 
-- `~/.config/zsh/.zshrc` — sources `tmux-ctdl.sh`, defines `dev` alias
-- `~/.config/tmux/tmux.conf` — 2 keybinds, 2 status-format lines (tmux also
-  needs `set -g status 2` and `status-interval 1` set somewhere — not
-  appended, likely already in your tmux.conf)
-- `~/.claude/settings.json` — hooks + statusLine, merged via `jq` (backup
-  written alongside; requires `jq`, else prints the manual patch path)
+- `~/.config/zsh/.zshrc`
+- `~/.config/tmux/tmux.conf`
+- `~/.claude/settings.json` (needs `jq`)
 
-Raw snippets live in [`integrations/`](integrations/) if you'd rather apply
-by hand. Per-agent wiring detail: [`docs/agents/claude.md`](docs/agents/claude.md),
+Raw snippets: [`integrations/`](integrations/). Per-agent detail:
+[`docs/agents/claude.md`](docs/agents/claude.md),
 [`docs/agents/copilot.md`](docs/agents/copilot.md).
 
 ## Configure
