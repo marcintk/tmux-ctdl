@@ -7,7 +7,13 @@ doing.
 
 ## What you get
 
-Run `ctdl` in a tmux window and it splits into three panes:
+- `ctdl` — one window, current repo, no new session (uses whatever session
+  you're already in)
+- `ctdlm` — same session, one window per git repo under a dir
+- `ctdlm <dir1> <dir2> ...` — first dir uses the current session; each extra
+  dir gets its own new session, named after that dir's basename
+
+`ctdl` splits the window into three panes:
 
 ```
 +------------------------------------------+
@@ -24,12 +30,6 @@ Run `ctdl` in a tmux window and it splits into three panes:
 | └─────────────┴────────────────┘         |
 +------------------------------------------+
 ```
-
-- `ctdl` — one window, current repo, no new session (uses whatever session
-  you're already in)
-- `ctdlm` — same session, one window per git repo under a dir
-- `ctdlm <dir1> <dir2> ...` — first dir uses the current session; each extra
-  dir gets its own new session, named after that dir's basename
 
 **Key bindings**
 
