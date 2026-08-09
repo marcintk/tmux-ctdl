@@ -28,8 +28,8 @@ Run `ctdl` in a tmux window and it splits into three panes:
   total
 - window badge: running / waiting on you / done
 - `ctdl` — one window, current repo
-- `ctdlm` — one window per git repo under a dir
-- `ctdlm <dir1> <dir2> ...` — one session per dir, still one window per repo
+- `ctdlm` — one session, one window per git repo under a dir
+- `ctdlm <dir1> <dir2> ...` — one session per dir, windows split the same way
 
 ## Install
 
