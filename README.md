@@ -63,9 +63,6 @@ Deploys to `$TMUX_CTDL_HOME` (default `~/.config/tmux/tmux-ctdl`), patches
 | `~/.config/tmux/tmux.conf` | [`integrations/tmux.conf`](integrations/tmux.conf) | |
 | `~/.claude/settings.json` | [`integrations/claude-settings.json`](integrations/claude-settings.json) | needs `jq` |
 
-Per-agent detail: [`docs/agents/claude.md`](docs/agents/claude.md),
-[`docs/agents/copilot.md`](docs/agents/copilot.md).
-
 ## Configure
 
 Edit `tmux-ctdl.conf` (deployed to `$TMUX_CTDL_HOME/tmux-ctdl.conf` on first
