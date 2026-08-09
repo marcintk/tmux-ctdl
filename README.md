@@ -27,14 +27,16 @@ Run `ctdl` in a tmux window and it splits into three panes:
 - status bar: agent's context window, usage/cost, (Claude) running lifetime
   total
 - window badge: running / waiting on you / done
-- `ctdl` — one window, current repo
-- `ctdlm` — one session, one window per git repo under a dir
-- `ctdlm <dir1> <dir2> ...` — one session per dir, windows split the same way
+- `ctdl` — one window, current repo, no new session (uses whatever session
+  you're already in)
+- `ctdlm` — same session, one window per git repo under a dir
+- `ctdlm <dir1> <dir2> ...` — first dir uses the current session; each extra
+  dir gets its own new session, named after that dir's basename
 
 ## Install
 
 ```sh
-git clone <this-repo> ~/Development/tmux-ctdl   # or wherever
+git clone <this-repo> ~/Development/tmux-ctdl
 cd ~/Development/tmux-ctdl
 ./install.sh
 ```
