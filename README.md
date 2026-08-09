@@ -19,13 +19,6 @@ Run `ctdl` in a tmux window and it splits into three panes:
 └─────────────┴────────────────┘
 ```
 
-**Key bindings**
-
-| Key | Pane | Runs | Effect |
-|---|---|---|---|
-| prefix + C | Left | `AGENT_CMD` (`claude`) | kill + restart the pane |
-| prefix + Space | Top right | `CHANGE_TRACKER_CMD` (`lazygit`) ↔ `EDITOR_CMD` (`nvim`) | respawn-swap in place, not a new split |
-
 - status bar: agent's context window, usage/cost, (Claude) running lifetime
   total
 - window badge: running / waiting on you / done
@@ -34,6 +27,13 @@ Run `ctdl` in a tmux window and it splits into three panes:
 - `ctdlm` — same session, one window per git repo under a dir
 - `ctdlm <dir1> <dir2> ...` — first dir uses the current session; each extra
   dir gets its own new session, named after that dir's basename
+
+**Key bindings**
+
+| Key | Pane | Runs | Effect |
+|---|---|---|---|
+| prefix + C | Left | `AGENT_CMD` (`claude`) | kill + restart the pane |
+| prefix + Space | Top right | `CHANGE_TRACKER_CMD` (`lazygit`) ↔ `EDITOR_CMD` (`nvim`) | respawn-swap in place, not a new split |
 
 ## Install
 
