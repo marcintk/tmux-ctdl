@@ -25,9 +25,6 @@ Run `ctdl` in a tmux window and it splits into three panes:
 +------------------------------------------+
 ```
 
-- wintab (window name badge): running / waiting on you / done
-- agentbar (own status bar line): model, context %, session/weekly usage,
-  (Claude) running lifetime cost
 - `ctdl` — one window, current repo, no new session (uses whatever session
   you're already in)
 - `ctdlm` — same session, one window per git repo under a dir
