@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Format, lint, test — in that order, so the cheapest check fails first.
+# Enable with: git config core.hooksPath .githooks
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+need() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "pre-commit: '$1' not found — install it first ($2)." >&2
+    exit 1
+  }
+}
+need shfmt "pacman -S shfmt / brew install shfmt"
+need shellcheck "pacman -S shellcheck / brew install shellcheck"
+
+echo "pre-commit: shfmt -d"
+if ! shfmt -i 2 -ci -d .; then
+  echo "pre-commit: formatting issues above — run 'shfmt -i 2 -ci -w .' and re-stage." >&2
+  exit 1
+fi
+
+echo "pre-commit: shellcheck"
+if ! find . -name '*.sh' -type f -print0 | xargs -0 shellcheck --severity=error; then
+  echo "pre-commit: shellcheck found errors above." >&2
+  exit 1
+fi
+
+echo "pre-commit: tests/run-tests.sh"
+bash tests/run-tests.sh

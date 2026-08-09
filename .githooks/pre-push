@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Full coverage gate — same threshold CI enforces, caught here before a push
+# updates a PR. Enable with: git config core.hooksPath .githooks
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+command -v kcov >/dev/null 2>&1 || {
+  echo "pre-push: 'kcov' not found — build it first (see .github/workflows/ci.yml's" >&2
+  echo "'Build kcov' step, or pacman -S kcov / brew install kcov if your distro ships one)." >&2
+  exit 1
+}
+
+echo "pre-push: tests/run-coverage.sh"
+bash tests/run-coverage.sh || exit 1
+
+echo "pre-push: coverage gate (100% per file)"
+bash tests/check-coverage.sh 100
