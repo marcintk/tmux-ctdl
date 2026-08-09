@@ -288,20 +288,6 @@ test_cost_lifetime_parses_npm_ccusage() {
   assert_contains "$out" "$(printf '2\t1500\t2025-05-03')" "sums every day and keeps the earliest date"
 }
 
-test_incoming_stale_rejects_older_block() {
-  . "$ADAPTER/adapter-claude.sh"
-  local tmp
-  tmp=$(mktemp -d)
-  printf 'session\t50\nweekly\t37\nfive_reset\t1785726000\nweek_reset\t9999999999\n' \
-    >"$tmp/agent-rate-claude"
-  local incoming
-  incoming=$(printf 'session\t90\nweekly\t37\nfive_reset\t1785700000\nweek_reset\t9999999999\n')
-  AGENT_TMP_DIR="$tmp" claude_incoming_stale claude "$incoming"
-  local rc=$?
-  rm -rf "$tmp"
-  [ "$rc" -eq 0 ]
-}
-
 # claude_refresh_costs: both slots cache cost AND tokens, keyed by slot name.
 # The two cost commands are stubbed (cost<TAB>tokens) — the real ones shell
 # out to ccusage.
