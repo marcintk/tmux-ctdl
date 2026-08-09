@@ -202,15 +202,12 @@ _rate_reset_companions() {
   local k out=""
   for k in "${!KV[@]}"; do
     case "$k" in
-      *_reset)
+      five_reset | week_reset)
         local v="${KV[$k]}"
         [ -n "$v" ] && [ "$v" != "9999999999" ] || continue
-        local fmt hm
-        case "$k" in
-          five_reset) fmt='+%H:%M' ;;
-          week_reset) fmt='+%a@%H:%M' ;;
-          *) fmt='+%a %H:%M' ;;
-        esac
+        local fmt
+        [ "$k" = five_reset ] && fmt='+%H:%M' || fmt='+%a@%H:%M'
+        local hm
         hm=$(date -d "@${v}" "$fmt" 2>/dev/null) || continue
         out+="${k}_at"$'\t'"${hm}"$'\n'
         ;;
