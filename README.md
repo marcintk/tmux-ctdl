@@ -19,11 +19,10 @@ Run `ctdl` in a tmux window and it splits into three panes:
 └─────────────┴────────────────┘
 ```
 
-| Pane | Runs | Key | Effect |
+| Key | Pane | Runs | Effect |
 |---|---|---|---|
-| Left | `AGENT_CMD` (`claude`) | prefix + C | kill + restart the pane |
-| Top right | `CHANGE_TRACKER_CMD` (`lazygit`) ↔ `EDITOR_CMD` (`nvim`) | prefix + Space | respawn-swap in place, not a new split |
-| Bottom right | plain terminal | — | — |
+| prefix + C | Left | `AGENT_CMD` (`claude`) | kill + restart the pane |
+| prefix + Space | Top right | `CHANGE_TRACKER_CMD` (`lazygit`) ↔ `EDITOR_CMD` (`nvim`) | respawn-swap in place, not a new split |
 
 A per-window flag (`@change_tracker_state`) remembers which of tracker/editor
 is showing.
