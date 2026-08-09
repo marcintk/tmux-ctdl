@@ -19,10 +19,17 @@ Run `ctdl` in a tmux window and it splits into three panes:
 └─────────────┴────────────────┘
 ```
 
-- **Left**: your coding agent (`claude` by default — configurable)
-- **Top right**: a change tracker (`lazygit` by default) — hit a key to swap
-  it for your editor (`nvim` by default) and back
-- **Bottom right**: a plain terminal
+- **Left**: your coding agent (`AGENT_CMD`, `claude` by default)
+- **Top right**: change tracker (`CHANGE_TRACKER_CMD`, `lazygit` by default)
+- **Bottom right**: plain terminal
+
+**prefix + Space** respawns the top-right pane in place (`respawn-pane -k`),
+flipping it between `CHANGE_TRACKER_CMD` and `EDITOR_CMD` (`nvim` by
+default) — it's a swap, not a new split. Left/bottom-right panes untouched.
+A per-window flag (`@change_tracker_state`) remembers which one is showing.
+
+**prefix + C** kills and restarts the left pane with `AGENT_CMD` — for when
+the agent process wedges.
 
 The outer status bar shows the agent's context window, usage/cost, and (for
 Claude) a running lifetime total. Each window also gets a small badge next to
@@ -73,38 +80,66 @@ install, then left alone on every reinstall after):
 - `ctdlm [dir...]` — one `ctdl` window per git repo under a dir (current dir,
   or `~/Development` if it has none); multiple dirs each get their own
   session. Works outside tmux too — starts one and re-enters.
-- **prefix + Space** — toggle the top-right pane between the change tracker
-  and your editor
+- **prefix + Space** — swap the top-right pane between change tracker and
+  editor
 - **prefix + C** — restart the agent pane
 
-## Module wiring
+## How data flows
 
-For contributors: `tmux-ctdl.sh` is the only entry point anything external
-calls (tmux keybinds, status-formats, Claude Code hooks). Everything else
-loads through `libs/boot-lib.sh` on demand.
+**Hooks in.** Claude Code is push-based: `~/.claude/settings.json` (deployed
+by install.sh) wires `SessionStart` / `UserPromptSubmit` / `Stop` /
+`Notification` / `PermissionRequest` straight to `tmux-ctdl.sh wintab-badge`,
+plus a 5s-interval `statusLine` to `tmux-ctdl.sh agent-push-usage`. Copilot
+CLI has no hook mechanism, so it's pulled instead — polled from
+`~/.copilot/session-store.db` on the scheduler tick below. One consequence:
+window badges (next section) only work for Claude.
+
+**Storage.** Everything lands as plain files under `AGENT_TMP_DIR` (`/tmp`
+by default), written atomically. No tmux user options, no sockets. A reaper
+sweeps stale files every 10 minutes.
+
+**The scheduler.** tmux's own `status-interval 1` fires a tick once a
+second. That tick: advances the badge animation, pulls Copilot usage
+(throttled to once a minute), and reaps stale state (throttled to once per
+10 minutes).
+
+**Rendering out.** The status-right segment (agentbar) re-reads state and
+repaints every second: usage, cost, context gauge. Window badges are written
+straight onto the tmux window name the moment a hook event or tick changes
+an agent's phase — no separate render pass.
 
 ```mermaid
 graph TD
-  ctdl["tmux-ctdl.sh (routing only)"]
-  ctdl --> layout["layout-lib"]
-  ctdl --> wintab["wintab-lib"]
-  ctdl --> agentbar["agentbar-lib"]
-  ctdl --> adapter["adapter-lib"]
-  ctdl --> agent["adapter-&lt;agent&gt;<br/>claude · copilot"]
+  claude["Claude Code hooks<br/>+ statusLine"]:::src
+  copilot["Copilot CLI<br/>session-store.db"]:::src
 
-  agentbar --> adapter
-  agent --> adapter
+  adapterClaude["adapter-claude<br/>parse"]:::adapter
+  adapterCopilot["adapter-copilot<br/>parse (pulled)"]:::adapter
 
-  layout --> tmuxlib["tmux-lib"]
-  wintab --> tmuxlib
-  adapter --> tmuxlib
+  state[("state files<br/>/tmp, atomic write")]:::store
 
-  wintab --> state["state-lib"]
-  adapter --> state
-  agentbar --> state
+  tick["scheduler tick<br/>status-interval 1s"]:::sched
 
-  tmuxlib --> tmuxbin(["tmux binary"])
-  state --> files(["AGENT_TMP_DIR (/tmp)"])
+  agentbar["agentbar<br/>status-right"]:::out
+  wintab["window badge<br/>window name"]:::out
+
+  claude -- push, per event --> adapterClaude
+  tick -- pull, throttled --> adapterCopilot
+  copilot --> adapterCopilot
+
+  adapterClaude --> state
+  adapterCopilot --> state
+  claude -. hook event .-> wintab
+
+  tick --> agentbar
+  tick --> wintab
+  state --> agentbar
+
+  classDef src fill:#1e3a5f,stroke:#5b9bd5,color:#fff
+  classDef adapter fill:#4a2f6b,stroke:#a97fd6,color:#fff
+  classDef store fill:#444,stroke:#999,color:#fff
+  classDef sched fill:#6b4a1e,stroke:#d69a3f,color:#fff
+  classDef out fill:#1e5f3a,stroke:#5bd68a,color:#fff
 ```
 
 ## Tests
