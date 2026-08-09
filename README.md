@@ -127,9 +127,9 @@ graph TD
   tick -- pull, throttled --> adapterCopilot
   copilot --> adapterCopilot
 
-  adapterClaude -- "tokens, context %,<br/>session/weekly/lifetime cost" --> state
-  adapterCopilot -- "model, tokens" --> state
-  claude -. "phase (agent progress:<br/>running/blocked/done)" .-> wintab
+  adapterClaude -- tokens, context %, cost history --> state
+  adapterCopilot -- model, tokens --> state
+  claude -. phase: running/blocked/done .-> wintab
 
   tick --> agentbar
   tick --> wintab
