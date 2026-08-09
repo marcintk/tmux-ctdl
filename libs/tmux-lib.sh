@@ -32,6 +32,14 @@ tmux_pane_path() {
   tmux display-message -t "$1" -p '#{pane_current_path}' 2>/dev/null
 }
 
+# tmux_window_name <pane> — the tmux window title a pane lives in (e.g. the
+# repo name ctdl names the window after). Empty, not an error, when tmux or
+# the pane is gone — callers treat a blank name as "omit," never as failure.
+tmux_window_name() {
+  [ -n "${1:-}" ] || return 0
+  tmux display-message -t "$1" -p '#{window_name}' 2>/dev/null
+}
+
 # tmux_session_panes <session> — prints "<window_id>\t<pane_current_path>", one
 # line per pane. EVERY pane, not just each window's active one: a window hosts an
 # agent if ANY of its panes sits in the agent's cwd, and in a ctdl layout the

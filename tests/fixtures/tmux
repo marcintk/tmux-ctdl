@@ -3,6 +3,7 @@
 # Set env vars to control responses:
 #   MOCK_SESSION   — session name (default: test-session)
 #   MOCK_WIN       — window id (default: @1)
+#   MOCK_WIN_NAME  — window name (default: test-window)
 #   MOCK_PPATH     — active pane's current path (default: /home/user/project)
 #   MOCK_PPATH2    — a SECOND pane in the same window (default: none). Lets a test
 #                    put the agent's cwd on a pane that is not the active one.
@@ -25,6 +26,7 @@ case "$1" in
     case "$fmt" in
       *session_name*window_id*) printf '%s\t%s\n' "${MOCK_SESSION:-test-session}" "${MOCK_WIN:-@1}" ;;
       *pane_current_path*) printf '%s\n' "${MOCK_PPATH:-/home/user/project}" ;;
+      *window_name*) printf '%s\n' "${MOCK_WIN_NAME:-test-window}" ;;
       *session_name*) printf '%s\n' "${MOCK_SESSION:-test-session}" ;;
       *window_id*) printf '%s\n' "${MOCK_WIN:-@1}" ;;
       *) printf '%s\n' "${MOCK_SESSION:-test-session}" ;;

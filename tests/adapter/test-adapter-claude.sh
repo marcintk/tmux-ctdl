@@ -213,47 +213,39 @@ test_usage_rows_absent_returns_1() {
   assert_empty "$out" && [ "$rc" -eq 1 ]
 }
 
-# claude_incoming_stale: a same-block session% that drops by a LOT (Claude
-# Code's rare spike-correction bug: an erroneous ~100% self-corrected down to
-# the real figure) must still be written. Regression for the bug where a bad
-# early spike (e.g. 100%) permanently locked the display until the block
-# reset, because used_percentage was wrongly treated as monotonic within a
-# block.
-test_incoming_stale_accepts_lower_session_same_block() {
+# claude_incoming_stale is now a single check: a real five_reset (present,
+# not the 9999999999 sentinel) writes, whatever the session/weekly values
+# say and regardless of what's already on disk — including a same-block
+# value lower than what's stored, and an out-of-order older block. Per
+# explicit direction: no magnitude threshold, no monotonic floor, no
+# block-order check. See the comment on claude_incoming_stale for the known
+# consequence (N panes open round-robin their distinct cached values).
+test_incoming_stale_accepts_any_real_five_reset() {
   . "$ADAPTER/adapter-claude.sh"
   local tmp
   tmp=$(mktemp -d)
-  printf 'session\t100\nweekly\t37\nfive_reset\t1785726000\nweek_reset\t9999999999\n' \
+  printf 'session\t58\nweekly\t16\nfive_reset\t1785726000\nweek_reset\t9999999999\n' \
     >"$tmp/agent-rate-claude"
   local incoming
-  incoming=$(printf 'session\t13\nweekly\t38\nfive_reset\t1785726000\nweek_reset\t9999999999\n')
+  incoming=$(printf 'session\t19\nweekly\t12\nfive_reset\t1700000000\nweek_reset\t9999999999\n')
   AGENT_TMP_DIR="$tmp" claude_incoming_stale claude "$incoming"
   local rc=$?
   rm -rf "$tmp"
   [ "$rc" -eq 1 ]
 }
 
-# A small same-block DROP is an idle window re-echoing its own stale cached
-# reading, not a spike correction — must be rejected. Regression for the
-# flicker bug: `rate` is account-wide now (one file, every window pushes into
-# it), so a busy window's fresh 15% and an idle window's stale 8% otherwise
-# fight over the same file every 5s tick, forever alternating the display.
-test_incoming_stale_rejects_small_drop_same_block() {
+test_incoming_stale_rejects_sentinel_five_reset() {
   . "$ADAPTER/adapter-claude.sh"
   local tmp
   tmp=$(mktemp -d)
-  printf 'session\t15\nweekly\t37\nfive_reset\t1785726000\nweek_reset\t9999999999\n' \
-    >"$tmp/agent-rate-claude"
   local incoming
-  incoming=$(printf 'session\t8\nweekly\t37\nfive_reset\t1785726000\nweek_reset\t9999999999\n')
+  incoming=$(printf 'session\t19\nweekly\t12\nfive_reset\t9999999999\nweek_reset\t9999999999\n')
   AGENT_TMP_DIR="$tmp" claude_incoming_stale claude "$incoming"
   local rc=$?
   rm -rf "$tmp"
   [ "$rc" -eq 0 ]
 }
 
-# An incoming event naming an OLDER rate-limit block (five_reset in the past
-# relative to what's stored) is still correctly rejected as out-of-order.
 # claude_parse_shared/claude_parse_context called directly in-process (the
 # push-usage suite drives them too, but only through many rapid `bash
 # tmux-ctdl.sh` subprocesses — belt and suspenders against losing a real path to
@@ -380,9 +372,8 @@ test_refresh_costs_skips_fresh_cache() {
 
 run_tests \
   test_display_renders_session_weekly \
-  test_incoming_stale_accepts_lower_session_same_block \
-  test_incoming_stale_rejects_small_drop_same_block \
-  test_incoming_stale_rejects_older_block \
+  test_incoming_stale_accepts_any_real_five_reset \
+  test_incoming_stale_rejects_sentinel_five_reset \
   test_parse_shared_direct \
   test_parse_context_direct \
   test_cost_weekly_parses_npm_ccusage \
