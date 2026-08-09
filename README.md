@@ -57,14 +57,13 @@ cd <DIR>
 Deploys to `$TMUX_CTDL_HOME` (default `~/.config/tmux/tmux-ctdl`), patches
 (idempotent, safe to re-run):
 
-| File | Note |
-|---|---|
-| `~/.config/zsh/.zshrc` | |
-| `~/.config/tmux/tmux.conf` | |
-| `~/.claude/settings.json` | needs `jq` |
+| File | Snippet | Note |
+|---|---|---|
+| `~/.config/zsh/.zshrc` | [`integrations/zshrc.sh`](integrations/zshrc.sh) | |
+| `~/.config/tmux/tmux.conf` | [`integrations/tmux.conf`](integrations/tmux.conf) | |
+| `~/.claude/settings.json` | [`integrations/claude-settings.json`](integrations/claude-settings.json) | needs `jq` |
 
-Raw snippets: [`integrations/`](integrations/). Per-agent detail:
-[`docs/agents/claude.md`](docs/agents/claude.md),
+Per-agent detail: [`docs/agents/claude.md`](docs/agents/claude.md),
 [`docs/agents/copilot.md`](docs/agents/copilot.md).
 
 ## Configure
