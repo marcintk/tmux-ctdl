@@ -123,7 +123,7 @@ graph TD
   agentbar["agentbar<br/>status-right"]:::out
   wintab["window badge<br/>window name"]:::out
 
-  claude -- push, per event --> adapterClaude
+  claude -- statusLine push, every 5s --> adapterClaude
   tick -- pull, throttled --> adapterCopilot
   copilot --> adapterCopilot
 
