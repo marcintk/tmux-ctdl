@@ -10,19 +10,21 @@ doing.
 Run `ctdl` in a tmux window and it splits into three panes:
 
 ```
-──────────────────────────────────────── wintab
- mysession   1:api ●  2:web
-────────────────────────────────────────
-──────────────────────────────────────── agentbar
- claude  ctx 42%  session 18%  $3.20
-────────────────────────────────────────
-┌─────────────┬────────────────┐
-│             │  change        │
-│  coding     │  tracker       │
-│  agent      │  (lazygit)     │
-│  (claude |  ├────────────────┤
-│  copilot)   │  terminal      │
-└─────────────┴────────────────┘
++------------------------------------------+
+| wintab                                   |
+|  mysession   1:api ●  2:web              |
+| ──────────────────────────────────────── |
+| agentbar                                 |
+|  claude  ctx 42%  session 18%  $3.20     |
+| ──────────────────────────────────────── |
+| ┌─────────────┬────────────────┐         |
+| │             │  change        │         |
+| │  coding     │  tracker       │         |
+| │  agent      │  (lazygit)     │         |
+| │  (claude |  ├────────────────┤         |
+| │  copilot)   │  terminal      │         |
+| └─────────────┴────────────────┘         |
++------------------------------------------+
 ```
 
 - wintab (window name badge): running / waiting on you / done
