@@ -86,29 +86,12 @@ install, then left alone on every reinstall after):
 
 ## How data flows
 
-**Hooks in.** Claude Code is push-based: `~/.claude/settings.json` (deployed
-by install.sh) wires `SessionStart` / `UserPromptSubmit` / `Stop` /
-`Notification` / `PermissionRequest` straight to `tmux-ctdl.sh wintab-badge`,
-plus a 5s-interval `statusLine` to `tmux-ctdl.sh agent-push-usage`. Copilot
-CLI has no hook mechanism, so it's pulled instead — polled from
-`~/.copilot/session-store.db` on the scheduler tick below. One consequence:
-window badges (next section) only work for Claude.
-
-**Storage.** Everything lands as plain files under `AGENT_TMP_DIR` (`/tmp`
-by default), written atomically. No tmux user options, no sockets. A reaper
-sweeps stale files every 10 minutes.
-
-**agent-refresh.** tmux's own `status-interval 1` fires this verb once a
-second. It advances the badge animation, pulls Copilot usage (throttled to
-once a minute), and reaps stale state (throttled to once per 10 minutes).
-
-**Rendering out.** agentbar is its own status bar line (`status-format[1]`,
-separate from the window list) — re-reads state and repaints every second:
-model, context-window gauge, session/weekly usage, and (Claude only) a
-running lifetime cost. Copilot's bar is thinner — no cost/lifetime data, since
-the adapter has nowhere to read it from yet. Window badges are written
-straight onto the tmux window name the moment a hook event or tick changes
-an agent's phase — no separate render pass.
+Claude Code pushes (hooks + a 5s statusLine); Copilot CLI has no hooks, so
+it's polled instead, once a second, off `agent-refresh`. State lands as
+plain files under `AGENT_TMP_DIR` (`/tmp` by default) — no tmux user
+options, no sockets. Window badges only work for Claude (no hook mechanism
+on Copilot's side); agentbar renders from whatever's in state, Claude's
+side includes a running lifetime cost Copilot's doesn't have.
 
 ```mermaid
 graph TD
