@@ -110,18 +110,19 @@ an agent's phase — no separate render pass.
 
 ```mermaid
 graph TD
-  claude["Claude Code hooks<br/>+ statusLine"]:::src
-  copilot["Copilot CLI<br/>session-store.db"]:::src
+  subgraph outside["outside tmux"]
+    claude["Claude Code hooks<br/>+ statusLine"]:::src
+    copilot["Copilot CLI<br/>session-store.db"]:::src
+  end
 
-  adapterClaude["adapter-claude<br/>parse"]:::adapter
-  adapterCopilot["adapter-copilot<br/>parse (pulled)"]:::adapter
-
-  state[("state files<br/>/tmp, atomic write")]:::store
-
-  tick["scheduler tick<br/>status-interval 1s"]:::sched
-
-  agentbar["agentbar<br/>status-right"]:::out
-  wintab["window badge<br/>window name"]:::out
+  subgraph ctdl["tmux + ctdl"]
+    tick["scheduler tick<br/>status-interval 1s"]:::sched
+    adapterClaude["adapter-claude<br/>parse"]:::adapter
+    adapterCopilot["adapter-copilot<br/>parse (pulled)"]:::adapter
+    state[("state files<br/>/tmp, atomic write")]:::store
+    agentbar["agentbar<br/>status-right"]:::out
+    wintab["window badge<br/>window name"]:::out
+  end
 
   claude -- statusLine push, every 5s --> adapterClaude
   tick -- pull, throttled --> adapterCopilot
@@ -140,6 +141,8 @@ graph TD
   classDef store fill:#444,stroke:#999,color:#fff
   classDef sched fill:#6b4a1e,stroke:#d69a3f,color:#fff
   classDef out fill:#1e5f3a,stroke:#5bd68a,color:#fff
+  style outside fill:none,stroke:#888,stroke-dasharray:4 3,color:#aaa
+  style ctdl fill:none,stroke:#888,color:#aaa
 ```
 
 ## Tests
