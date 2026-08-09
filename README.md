@@ -10,6 +10,7 @@ doing.
 Run `ctdl` in a tmux window and it splits into three panes:
 
 ```
+ mysession   1:api ●  2:web            ← wintab: window name + badge
 ┌─────────────┬────────────────┐
 │             │  change        │
 │  coding     │  tracker       │
@@ -17,11 +18,12 @@ Run `ctdl` in a tmux window and it splits into three panes:
 │  (claude |  ├────────────────┤
 │  copilot)   │  terminal      │
 └─────────────┴────────────────┘
+ claude  ctx 42%  session 18%  $3.20     ← agentbar
 ```
 
-- status bar: agent's context window, usage/cost, (Claude) running lifetime
-  total
-- window badge: running / waiting on you / done
+- wintab (window name badge): running / waiting on you / done
+- agentbar (own status bar line): model, context %, session/weekly usage,
+  (Claude) running lifetime cost
 - `ctdl` — one window, current repo, no new session (uses whatever session
   you're already in)
 - `ctdlm` — same session, one window per git repo under a dir
@@ -59,8 +61,7 @@ install, then left alone on every reinstall after):
 
 | Var | Meaning |
 |---|---|
-| `CODING_AGENT` | `claude` or `copilot` |
-| `AGENT_CMD` | command that starts your agent in the left pane |
+| `CODING_AGENT` | `claude` or `copilot` — picks the adapter module, which then hard-sets `AGENT_CMD` itself (not settable here) |
 | `CHANGE_TRACKER_CMD` / `EDITOR_CMD` | what the top-right pane runs, and what it swaps to on toggle |
 | status bar colours/thresholds | every one has a default, only name the ones you want different |
 
