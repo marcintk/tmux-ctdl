@@ -117,8 +117,10 @@ graph TD
     adapterClaude["adapter-claude<br/>parse"]:::adapter
     adapterCopilot["adapter-copilot<br/>parse (pulled)"]:::adapter
     state[("state files<br/>/tmp, atomic write")]:::store
-    agentbar["agentbar<br/>status-right"]:::out
-    wintab["window badge<br/>window name"]:::out
+    subgraph render["render"]
+      agentbar["agentbar<br/>status-right"]:::out
+      wintab["wintab<br/>(badge)"]:::out
+    end
   end
 
   claude -- statusLine push, every 5s --> adapterClaude
@@ -139,6 +141,7 @@ graph TD
   classDef sched fill:#6b4a1e,stroke:#d69a3f,color:#fff
   classDef out fill:#1e5f3a,stroke:#5bd68a,color:#fff
   style ctdl fill:none,stroke:#888,color:#aaa
+  style render fill:none,stroke:#5bd68a,stroke-dasharray:2 2,color:#aaa
 ```
 
 ## Tests
