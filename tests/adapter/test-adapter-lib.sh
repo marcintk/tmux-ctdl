@@ -193,6 +193,15 @@ test_get_agent_usage_fills_vars() {
   [ "${F[session]}" = "12.5" ] && [ "${F[model]}" = "Sonnet" ] && [ "${F[effort]}" = "high" ]
 }
 
+# get_agent_usage also merges the account-wide rate store (not just shared).
+test_get_agent_usage_fills_from_rate() {
+  setup
+  write_rate faketest "$(printf 'five_reset\t123\n')"
+  local -A F
+  get_agent_usage F faketest test-session @1
+  [ "${F[five_reset]}" = "123" ]
+}
+
 test_get_agent_usage_missing_returns_1() {
   setup
   local -A F
@@ -317,6 +326,7 @@ run_tests \
   test_until_at_reached_reads_now \
   test_until_at_overdue_reads_now \
   test_get_agent_usage_fills_vars \
+  test_get_agent_usage_fills_from_rate \
   test_get_agent_usage_missing_returns_1 \
   test_get_agent_context_fills_vars \
   test_get_agent_context_missing_returns_1 \

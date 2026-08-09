@@ -94,6 +94,39 @@ test_usage_rows_render_block_countdown() {
   assert_contains "$out" "(in 30m)" "countdown under an hour is minutes"
 }
 
+# A real week_reset renders the weekly clock instead of the sentinel.
+test_usage_rows_render_week_reset_clock() {
+  . "$ADAPTER/adapter-claude.sh"
+  local tmp
+  tmp=$(mktemp -d)
+  printf 'session\t10\nweekly\t5\nfive_reset\t9999999999\nweek_reset\t1785726000\n' \
+    >"$tmp/agent-shared-claude-test-session-@1"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+  rm -rf "$tmp"
+  ! printf '%s' "$out" | grep -qF '⟳?@?:??'
+}
+
+# A cached "0" tokens value (not merely absent) still renders empty, not "Σ0".
+test_usage_rows_zero_tokens_shows_empty() {
+  . "$ADAPTER/adapter-claude.sh"
+  local tmp
+  tmp=$(mktemp -d)
+  printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\n' \
+    >"$tmp/agent-shared-claude-test-session-@1"
+  printf '0\n' >"$tmp/agent-tokens-session-claude"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+  rm -rf "$tmp"
+  ! printf '%s' "$out" | grep -qE 'Σ[0-9]'
+}
+
+# claude_effort_level falls back to "default" when CLAUDE_SETTINGS is missing.
+test_effort_level_defaults_without_settings() {
+  . "$ADAPTER/adapter-claude.sh"
+  [ "$(CLAUDE_SETTINGS=/nonexistent/settings.json claude_effort_level)" = "default" ]
+}
+
 # tokens is each row's OWN cached total — Session and Weekly differ, not one
 # figure copied onto both.
 test_usage_rows_show_distinct_tokens_per_row() {
@@ -357,6 +390,9 @@ run_tests \
   test_cost_lifetime_parses_npm_ccusage \
   test_usage_rows_are_plain_data \
   test_usage_rows_render_block_countdown \
+  test_usage_rows_render_week_reset_clock \
+  test_usage_rows_zero_tokens_shows_empty \
+  test_effort_level_defaults_without_settings \
   test_usage_rows_show_distinct_tokens_per_row \
   test_usage_rows_tokens_empty_without_cache \
   test_usage_rows_includes_lifetime_row \

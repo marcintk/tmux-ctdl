@@ -106,13 +106,11 @@ layout_workspace_dirs() {
 layout_open_workspaces() {
   local base=$1 installer=$2 cmd=$3 dir pane
   tmux_rename_session "$(basename "$base" | tr '.:' '--')"
-  # One physical line (loop body included): kcov's bash line tracer doesn't
-  # credit a bare `done < <(...)` on its own line even though it runs.
   while IFS= read -r dir; do
     [ -n "$dir" ] || continue
     pane=$(tmux_new_window "$dir")
     tmux_send_keys "$pane" "$cmd"
-  done < <(layout_workspace_dirs "$base")
+  done < <(layout_workspace_dirs "$base") # KCOV_TRACER_LOST
   tmux_kill_window "$installer"
 }
 
@@ -130,6 +128,6 @@ layout_open_workspaces_new_session() {
     [ -n "$dir" ] || continue
     pane=$(tmux_new_window "$dir" "$name")
     tmux_send_keys "$pane" "$cmd"
-  done < <(layout_workspace_dirs "$base")
+  done < <(layout_workspace_dirs "$base") # KCOV_TRACER_LOST
   tmux_kill_window "$installer"
 }

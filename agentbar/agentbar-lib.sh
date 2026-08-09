@@ -154,15 +154,19 @@ paint_usage() {
 # usage pill of the same tier can never drift apart.
 model_style() {
   local model="${1,,}" tok tier=DIM
-  for tok in ${SAFE_MODELS:-haiku luna}; do [[ "$model" == *"$tok"* ]] && {
-    tier=SAFE
-    break
-  }; done
-  if [ "$tier" = DIM ]; then
-    for tok in ${WARN_MODELS:-opus fable sol}; do [[ "$model" == *"$tok"* ]] && {
-      tier=WARN
+  for tok in ${SAFE_MODELS:-haiku luna}; do
+    if [[ "$model" == *"$tok"* ]]; then
+      tier=SAFE
       break
-    }; done
+    fi
+  done
+  if [ "$tier" = DIM ]; then
+    for tok in ${WARN_MODELS:-opus fable sol}; do
+      if [[ "$model" == *"$tok"* ]]; then
+        tier=WARN
+        break
+      fi
+    done
   fi
   local bg fg
   IFS=$'\t' read -r bg fg <<<"$(_tier_colors "$tier")"

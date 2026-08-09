@@ -318,6 +318,46 @@ test_kfmt_at_1000000000_shows_b() {
   [ "$out" = "8B" ]
 }
 
+test_ctx_kfmt_at_1000000_shows_m() {
+  local out
+  out=$(
+    . "$SCRIPTS/agentbar/agentbar-lib.sh"
+    ctx_kfmt_out=
+    _ctx_kfmt 6488061 ctx_kfmt_out
+    printf '%s' "$ctx_kfmt_out"
+  )
+  [ "$out" = "6M" ]
+}
+
+test_ctx_kfmt_at_1000000000_shows_b() {
+  local out
+  out=$(
+    . "$SCRIPTS/agentbar/agentbar-lib.sh"
+    ctx_kfmt_out=
+    _ctx_kfmt 8200000000 ctx_kfmt_out
+    printf '%s' "$ctx_kfmt_out"
+  )
+  [ "$out" = "8B" ]
+}
+
+test_model_style_safe_tier() {
+  local out
+  out=$(
+    . "$SCRIPTS/agentbar/agentbar-lib.sh"
+    model_style haiku-4-5
+  )
+  assert_contains "$out" "#1a3320" "safe-tier model uses SAFE colours"
+}
+
+test_model_style_warn_tier() {
+  local out
+  out=$(
+    . "$SCRIPTS/agentbar/agentbar-lib.sh"
+    model_style opus-5
+  )
+  assert_contains "$out" "#7a1a1a" "warn-tier model uses WARN colours"
+}
+
 test_ctx_label_shown_when_requested() {
   local out
   out=$(
@@ -375,4 +415,8 @@ run_tests \
   test_kfmt_at_1000_shows_k \
   test_kfmt_at_1000000_shows_m \
   test_kfmt_at_1000000000_shows_b \
+  test_ctx_kfmt_at_1000000_shows_m \
+  test_ctx_kfmt_at_1000000000_shows_b \
+  test_model_style_safe_tier \
+  test_model_style_warn_tier \
   test_ctx_label_shown_when_requested

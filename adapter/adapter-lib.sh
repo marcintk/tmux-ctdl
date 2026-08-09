@@ -83,15 +83,15 @@ get_agent_usage() {
   local -n _gau_out=$arrname
   _gau_out=()
   local -A _gau_rate
-  state_get_kv _gau_rate rate "$agent" && {
+  if state_get_kv _gau_rate rate "$agent"; then
     for k in "${!_gau_rate[@]}"; do _gau_out[$k]="${_gau_rate[$k]}"; done
     ok=0
-  }
+  fi
   local -A _gau_shared
-  state_get_kv _gau_shared shared "$agent" "$tsess" "$win" && {
+  if state_get_kv _gau_shared shared "$agent" "$tsess" "$win"; then
     for k in "${!_gau_shared[@]}"; do _gau_out[$k]="${_gau_shared[$k]}"; done
     ok=0
-  }
+  fi
   return $ok
 }
 
@@ -300,10 +300,12 @@ adapter_main() {
   # into their own stores here — write_shared/write_rate each own how THEIR
   # half is kept, this just sorts the mail.
   local have=0 v
-  for v in "${F[@]}"; do [ -n "$v" ] && {
-    have=1
-    break
-  }; done
+  for v in "${F[@]}"; do
+    if [ -n "$v" ]; then
+      have=1
+      break
+    fi
+  done
   if [ "$have" -eq 1 ]; then
     local mw_kv="" rate_kv="" k
     for k in "${!F[@]}"; do

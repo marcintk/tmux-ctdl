@@ -203,6 +203,26 @@ test_ctdlm_falls_back_to_development_dir() {
   assert_contains "$out" "$expect" "cwd fell back to ~/Development"
 }
 
+# Same fallback, but ~/Development doesn't exist either — cd fails, ctdlm
+# reports the error and returns 1 instead of silently continuing in $PWD.
+test_ctdlm_reports_when_fallback_dir_missing() {
+  setup
+  local scratch_home
+  scratch_home=$(mktemp -d)
+  local nogit
+  nogit=$(mktemp -d)
+  local out rc
+  out=$(
+    . "$SCRIPTS/tmux-ctdl.sh"
+    export TMUX=/tmp/fake-tmux-socket TMUX_PANE=mock-installer HOME="$scratch_home"
+    cd "$nogit" && ctdlm
+  )
+  rc=$?
+  rm -rf "$scratch_home" "$nogit"
+  assert_contains "$out" "Cannot cd to ~/Development" "reports the cd failure" &&
+    [ "$rc" -eq 1 ]
+}
+
 run_tests \
   test_tracker_editor_toggle_verb \
   test_agent_respawn_verb \
@@ -215,4 +235,5 @@ run_tests \
   test_ctdlm_outside_tmux_forwards_dirs \
   test_ctdlm_inside_tmux_opens_workspaces \
   test_ctdlm_multiple_dirs_fans_out_to_new_sessions \
-  test_ctdlm_falls_back_to_development_dir
+  test_ctdlm_falls_back_to_development_dir \
+  test_ctdlm_reports_when_fallback_dir_missing

@@ -222,12 +222,10 @@ wintab_tick() {
 
   # wintab_live_windows does the per-window "any pane live?" judgment in one
   # pass; this loop just feeds each window's verdict to the state machine.
-  # One physical line (loop body included): kcov's bash line tracer doesn't
-  # credit a bare `done < <(...)` on its own line even though it runs.
   while IFS=$'\t' read -r win is_live; do
     [ -n "$win" ] || continue
     wintab_on_tick "$agent" "$tsess" "$win" "$is_live" "$tick" "$now"
-  done < <(wintab_live_windows "$panes" "$live")
+  done < <(wintab_live_windows "$panes" "$live") # KCOV_TRACER_LOST
 }
 
 # wintab_status_tick <agent> <tsess> — the whole once-a-second status-format

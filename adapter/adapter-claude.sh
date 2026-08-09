@@ -316,6 +316,19 @@ claude_cost_lifetime() {
     jq -r '(.daily // []) as $d | ($d | map(.totalCost // 0) | add // 0) as $c | ($d | map(.totalTokens // 0) | add // 0) as $t | ($d | map(.period) | min // "") as $s | "\($c)\t\($t)\t\($s)"'
 }
 
+# _claude_refresh_slot <agent> <slot> — one slot's flock-guarded body, run
+# under the lock fd (9) opened by its caller. Split out so the caller's
+# subshell wrapper stays a single statement.
+_claude_refresh_slot() {
+  local agent=$1 slot=$2 out
+  flock -n 9 || exit 0
+  out=$("claude_cost_${slot}") &&
+    IFS=$'\t' read -r cost_val tok_val since_val <<<"$out" &&
+    state_put "$cost_val" cost "$agent" "$slot" &&
+    state_put "$tok_val" tokens "$agent" "$slot" &&
+    { [ -z "$since_val" ] || state_put "$since_val" since "$agent" "$slot"; }
+}
+
 # claude_refresh_costs <agent> — repopulate both slots' cost+tokens caches in
 # the background, skipping any slot refreshed within USAGE_REFRESH.
 #
@@ -331,14 +344,7 @@ claude_refresh_costs() {
   refresh=$(usage_refresh_secs)
   for slot in weekly session lifetime; do
     [ "$(state_age "$now" cost "$agent" "$slot")" -gt "$refresh" ] &&
-      (
-        flock -n 9 || exit 0
-        out=$("claude_cost_${slot}") &&
-          IFS=$'\t' read -r cost_val tok_val since_val <<<"$out" &&
-          state_put "$cost_val" cost "$agent" "$slot" &&
-          state_put "$tok_val" tokens "$agent" "$slot" &&
-          { [ -z "$since_val" ] || state_put "$since_val" since "$agent" "$slot"; }
-      ) 9>"$(state_lockfile "agent-cost-refresh-${slot}-${agent}.lock")" &
+      (_claude_refresh_slot "$agent" "$slot") 9>"$(state_lockfile "agent-cost-refresh-${slot}-${agent}.lock")" &
   done
   return 0
 }
