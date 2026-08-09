@@ -14,8 +14,8 @@ Run `ctdl` in a tmux window and it splits into three panes:
 │             │  change        │
 │  coding     │  tracker       │
 │  agent      │  (lazygit)     │
-│  (claude)   ├────────────────┤
-│             │  terminal      │
+│  (claude |  ├────────────────┤
+│  copilot)   │  terminal      │
 └─────────────┴────────────────┘
 ```
 
