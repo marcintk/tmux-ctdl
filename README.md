@@ -113,7 +113,7 @@ bash tests/run-coverage.sh       # kcov, writes .coverage/
 | Hook | Runs |
 |---|---|
 | pre-commit | shfmt + shellcheck + tests |
-| pre-push | 100% coverage gate |
+| pre-push | 100% coverage gate (`kcov`) |
 
 Enable once per clone:
 
