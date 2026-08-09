@@ -82,13 +82,6 @@ Keybindings are in the pane table under [What you get](#what-you-get).
 
 ## How data flows
 
-Claude Code pushes (hooks + a 5s statusLine); Copilot CLI has no hooks, so
-it's polled instead, once a second, off `agent-refresh`. State lands as
-plain files under `AGENT_TMP_DIR` (`/tmp` by default) — no tmux user
-options, no sockets. Window badges only work for Claude (no hook mechanism
-on Copilot's side); agentbar renders from whatever's in state, Claude's
-side includes a running lifetime cost Copilot's doesn't have.
-
 ```mermaid
 graph TD
   claude["Claude Code hooks<br/>+ statusLine"]:::src
