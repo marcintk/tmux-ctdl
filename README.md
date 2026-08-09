@@ -102,8 +102,11 @@ sweeps stale files every 10 minutes.
 second. It advances the badge animation, pulls Copilot usage (throttled to
 once a minute), and reaps stale state (throttled to once per 10 minutes).
 
-**Rendering out.** The status-right segment (agentbar) re-reads state and
-repaints every second: usage, cost, context gauge. Window badges are written
+**Rendering out.** agentbar is its own status bar line (`status-format[1]`,
+separate from the window list) — re-reads state and repaints every second:
+model, context-window gauge, session/weekly usage, and (Claude only) a
+running lifetime cost. Copilot's bar is thinner — no cost/lifetime data, since
+the adapter has nowhere to read it from yet. Window badges are written
 straight onto the tmux window name the moment a hook event or tick changes
 an agent's phase — no separate render pass.
 
@@ -118,7 +121,7 @@ graph TD
     adapterCopilot["adapter-copilot<br/>parse (pulled)"]:::adapter
     state[("state files<br/>/tmp, atomic write")]:::store
     subgraph render["render"]
-      agentbar["agentbar<br/>status-right"]:::out
+      agentbar["agentbar<br/>own status bar"]:::out
       wintab["wintab<br/>(badge)"]:::out
     end
   end
