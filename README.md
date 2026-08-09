@@ -9,35 +9,24 @@ doing.
 
 Run `ctdl` in a tmux window and it splits into three panes:
 
-```mermaid
-graph TD
-  ctdl["ctdl<br/>current session, 1 window"]:::cmd
-  ctdlm["ctdlm<br/>current session,<br/>1 window per repo"]:::cmd
-  ctdlm2["ctdlm dir1 dir2 ...<br/>+1 new session per extra dir"]:::cmd
-
-  subgraph win["ctdl window"]
-    direction LR
-    agent["Left<br/>coding agent<br/>claude | copilot"]:::pane
-    subgraph right[" "]
-      direction TB
-      tracker["Top right<br/>change tracker<br/>lazygit"]:::pane
-      term["Bottom right<br/>terminal"]:::pane
-    end
-  end
-
-  ctdl --> win
-  ctdlm --> win
-  ctdlm2 -. per extra dir .-> win
-
-  win --> statusbar["status bar<br/>context %, usage/cost,<br/>Claude: lifetime total"]:::out
-  win --> badge["window badge<br/>running / waiting / done"]:::out
-
-  classDef cmd fill:#1e5f3a,stroke:#5bd68a,color:#fff
-  classDef pane fill:#1e3a5f,stroke:#5b9bd5,color:#fff
-  classDef out fill:#4a2f6b,stroke:#a97fd6,color:#fff
-  style win fill:none,stroke:#888,color:#aaa
-  style right fill:none,stroke:#888,color:#aaa
 ```
+┌─────────────┬────────────────┐
+│             │  change        │
+│  coding     │  tracker       │
+│  agent      │  (lazygit)     │
+│  (claude |  ├────────────────┤
+│  copilot)   │  terminal      │
+└─────────────┴────────────────┘
+```
+
+- status bar: agent's context window, usage/cost, (Claude) running lifetime
+  total
+- window badge: running / waiting on you / done
+- `ctdl` — one window, current repo, no new session (uses whatever session
+  you're already in)
+- `ctdlm` — same session, one window per git repo under a dir
+- `ctdlm <dir1> <dir2> ...` — first dir uses the current session; each extra
+  dir gets its own new session, named after that dir's basename
 
 **Key bindings**
 
