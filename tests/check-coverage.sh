@@ -7,7 +7,10 @@ cd "$(dirname "$0")/.." || exit 1
 
 THRESHOLD=${1:-90}
 RUN_DIR=$(find .coverage -maxdepth 1 -type d -name 'run-tests.sh.*' | head -1)
-[ -n "$RUN_DIR" ] || { echo "check-coverage: no coverage run found — run tests/run-coverage.sh first" >&2; exit 1; }
+[ -n "$RUN_DIR" ] || {
+  echo "check-coverage: no coverage run found — run tests/run-coverage.sh first" >&2
+  exit 1
+}
 
 python3 - "$RUN_DIR/coverage.json" "$THRESHOLD" <<'EOF'
 import json, sys

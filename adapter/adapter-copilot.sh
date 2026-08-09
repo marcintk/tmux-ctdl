@@ -26,7 +26,10 @@ COPILOT_DB="${COPILOT_DB:-$HOME/.copilot/session-store.db}"
 # exactly like Claude's stdin payload — same contract, different source. Prints
 # "{}" when the db doesn't exist yet (Copilot installed but never run).
 copilot_collect() {
-  [ -f "$COPILOT_DB" ] || { printf '{}'; return 0; }
+  [ -f "$COPILOT_DB" ] || {
+    printf '{}'
+    return 0
+  }
   sqlite3 -readonly -json "$COPILOT_DB" 'SELECT model, reasoning_effort FROM assistant_usage_events ORDER BY id DESC LIMIT 1' 2>/dev/null | jq -c '.[0] // {}' # KCOV_TRACER_LOST
 }
 
@@ -71,6 +74,6 @@ copilot_usage_rows() {
   [ -z "${today}${week}${month}" ] && return 1
 
   printf 'Today\t%s\t⟳%s\t\n' "${today:-0}" "$(date -d 'tomorrow 00:00' '+%H:%M' 2>/dev/null)"
-  printf 'Week\t%s\t⟳%s\t\n'  "${week:-0}"  "$(date -d 'next monday' '+%a' 2>/dev/null)"
+  printf 'Week\t%s\t⟳%s\t\n' "${week:-0}" "$(date -d 'next monday' '+%a' 2>/dev/null)"
   printf 'Month\t%s\t⟳%s\t\n' "${month:-0}" "$(date -d "$(date '+%Y-%m-01') +1 month" '+%b %-d' 2>/dev/null)"
 }

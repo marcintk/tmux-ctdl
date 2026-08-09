@@ -8,6 +8,6 @@ if [ -n "${MOCK_CCUSAGE_JSON:-}" ]; then
 fi
 
 case "$4" in
-  daily)  printf '{"daily":[{"totalCost":1.5,"totalTokens":1000},{"totalCost":0.5,"totalTokens":500}]}' ;;
+  daily) printf '{"daily":[{"totalCost":1.5,"totalTokens":1000},{"totalCost":0.5,"totalTokens":500}]}' ;;
   blocks) printf '{"blocks":[{"costUSD":0.25,"totalTokens":200}]}' ;;
 esac

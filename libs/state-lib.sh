@@ -56,20 +56,21 @@ _state_path() {
   local kind=$1 agent=$2 k1=${3:-} k2=${4:-} tmp
   tmp="$(_agent_tmp)"
   case "$kind" in
-    rate)   printf '%s/agent-rate-%s'         "$tmp" "$agent" ;;
+    rate) printf '%s/agent-rate-%s' "$tmp" "$agent" ;;
     shared) printf '%s/agent-shared-%s-%s-%s' "$tmp" "$agent" "${k1:-_}" "${k2:-0}" ;;
-    ctx)    printf '%s/agent-ctx-%s-%s-%s' "$tmp" "$agent" "${k1:-_}" "${k2:-0}" ;;
-    cost)   printf '%s/agent-cost-%s-%s'   "$tmp" "${k1,,}" "$agent" ;;
+    ctx) printf '%s/agent-ctx-%s-%s-%s' "$tmp" "$agent" "${k1:-_}" "${k2:-0}" ;;
+    cost) printf '%s/agent-cost-%s-%s' "$tmp" "${k1,,}" "$agent" ;;
     tokens) printf '%s/agent-tokens-%s-%s' "$tmp" "${k1,,}" "$agent" ;;
-    since)  printf '%s/agent-since-%s-%s'  "$tmp" "${k1,,}" "$agent" ;;
-    *)      printf '%s/agent-%s-%s-%s-%s'  "$tmp" "$kind" "$agent" "$k1" "$k2" ;;
+    since) printf '%s/agent-since-%s-%s' "$tmp" "${k1,,}" "$agent" ;;
+    *) printf '%s/agent-%s-%s-%s-%s' "$tmp" "$kind" "$agent" "$k1" "$k2" ;;
   esac
 }
 
 # state_get <kind> <agent> [keys...] — print the stored value. Returns 1 when the
 # entry does not exist, so callers can branch without a separate check.
 state_get() {
-  local f; f="$(_state_path "$@")"
+  local f
+  f="$(_state_path "$@")"
   [ -f "$f" ] || return 1
   cat "$f"
 }
@@ -83,14 +84,15 @@ state_exists() { [ -f "$(_state_path "$@")" ]; }
 # file, which is what a marker is.
 _state_write() {
   local f=$1 value=$2 t="${1}.tmp.$$"
-  if [ -n "$value" ]; then printf '%s\n' "$value" > "$t"; else : > "$t"; fi
+  if [ -n "$value" ]; then printf '%s\n' "$value" >"$t"; else : >"$t"; fi
   mv -f "$t" "$f"
 }
 
 # state_put <value> <kind> <agent> [keys...] — store a value. The value leads so
 # that the keys stay variadic behind it; a kind with one key passes one key.
 state_put() {
-  local value=$1; shift
+  local value=$1
+  shift
   _state_write "$(_state_path "$@")" "$value"
 }
 
@@ -120,10 +122,15 @@ kv_fill() {
 # associative array from a stored key/value value. Returns 1 (array left
 # empty) when the entry doesn't exist.
 state_get_kv() {
-  local arrname=$1; shift
+  local arrname=$1
+  shift
   local raw
-  raw="$(state_get "$@")" || { local -n _e=$arrname; _e=(); return 1; }
-  kv_fill "$arrname" <<< "$raw"
+  raw="$(state_get "$@")" || {
+    local -n _e=$arrname
+    _e=()
+    return 1
+  }
+  kv_fill "$arrname" <<<"$raw"
 }
 
 # state_age <now> <kind> <agent> [keys...] — seconds since the entry was last
@@ -133,12 +140,16 @@ state_get_kv() {
 # and it leads, so a per-agent or per-slot kind reaches it without padding the
 # key slots it doesn't have.
 state_age() {
-  local now=$1; shift
+  local now=$1
+  shift
   local f mtime
   f="$(_state_path "$@")"
   mtime=$(stat -c %Y "$f" 2>/dev/null)
-  [ -n "$mtime" ] || { printf '99999999'; return 0; }
-  printf '%s' "$(( now - mtime ))"
+  [ -n "$mtime" ] || {
+    printf '99999999'
+    return 0
+  }
+  printf '%s' "$((now - mtime))"
 }
 
 # state_reap_stale <now> — delete state files older than STATE_MAX_AGE
@@ -154,9 +165,9 @@ state_reap_stale() {
   tmp="$(_agent_tmp)"
   marker="$tmp/agent-reap-marker"
   mtime=$(stat -c %Y "$marker" 2>/dev/null || printf 0)
-  [ "$(( now - mtime ))" -lt "${STATE_REAP_INTERVAL:-600}" ] && return 0
-  : > "$marker"
+  [ "$((now - mtime))" -lt "${STATE_REAP_INTERVAL:-600}" ] && return 0
+  : >"$marker"
   find "$tmp" -maxdepth 1 -name 'agent-*' ! -name 'agent-reap-marker' \
-    -mmin "+$(( ${STATE_MAX_AGE:-21600} / 60 ))" -delete 2>/dev/null
+    -mmin "+$((${STATE_MAX_AGE:-21600} / 60))" -delete 2>/dev/null
   return 0
 }

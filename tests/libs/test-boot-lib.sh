@@ -7,7 +7,7 @@ DIR="$(cd "$(dirname "$0")" && pwd)" || exit 1
 
 export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 CONF_DIR=$(mktemp -d)
-cat > "$CONF_DIR/tmux-ctdl.conf" << CONF
+cat >"$CONF_DIR/tmux-ctdl.conf" <<CONF
 CODING_AGENT="copilot"
 CONF
 export TMUX_CTDL_CONF="$CONF_DIR/tmux-ctdl.conf"

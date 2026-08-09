@@ -12,26 +12,29 @@ export TMUX_CTDL_HOME="$(cd "$DIR/../.." && pwd)"
 
 # End-to-end: claude_format_usage renders Session/Weekly from the shared file.
 test_display_renders_session_weekly() {
-  local th; th=$(mktemp -d)
-  echo "CODING_AGENT='claude'" > "$th/tmux-ctdl.conf"
-  local tmp; tmp=$(mktemp -d)
+  local th
+  th=$(mktemp -d)
+  echo "CODING_AGENT='claude'" >"$th/tmux-ctdl.conf"
+  local tmp
+  tmp=$(mktemp -d)
   printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\nmodel\tSonnet\neffort\tnormal\n' \
-    > "$tmp/agent-shared-claude-test-session-@1"
+    >"$tmp/agent-shared-claude-test-session-@1"
   local out
   out=$(TMUX_CTDL_CONF="$th/tmux-ctdl.conf" AGENT_TMP_DIR="$tmp" \
-         bash "$TMUX_CTDL_HOME/tmux-ctdl.sh" agentbar test-session @1)
+    bash "$TMUX_CTDL_HOME/tmux-ctdl.sh" agentbar test-session @1)
   rm -rf "$th" "$tmp"
   assert_contains "$out" "Claude: Sonnet" &&
-  assert_contains "$out" "Session: 45.5%" &&
-  assert_contains "$out" "Weekly: 22.7%"
+    assert_contains "$out" "Session: 45.5%" &&
+    assert_contains "$out" "Weekly: 22.7%"
 }
 
 # claude_parse_session: pure jq extraction, testable without real processes.
 test_parse_session_extracts_pid_cwd() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp)
-  printf '{"pid":12345,"cwd":"/home/user/project"}' > "$tmp"
-  IFS=$'\t' read -r pid cwd <<< "$(claude_parse_session "$tmp")"
+  local tmp
+  tmp=$(mktemp)
+  printf '{"pid":12345,"cwd":"/home/user/project"}' >"$tmp"
+  IFS=$'\t' read -r pid cwd <<<"$(claude_parse_session "$tmp")"
   rm -f "$tmp"
   [ "$pid" = "12345" ] && [ "$cwd" = "/home/user/project" ]
 }
@@ -40,9 +43,11 @@ test_parse_session_extracts_pid_cwd() {
 # Inject sessions_dir directly — no HOME manipulation needed.
 test_live_cwds_prints_live_session_cwd() {
   . "$ADAPTER/adapter-claude.sh"
-  local dir; dir=$(mktemp -d)
-  printf '{"pid":%d,"cwd":"/home/user/project"}' "$$" > "$dir/s1.json"
-  local out; out=$(claude_live_cwds "$dir")
+  local dir
+  dir=$(mktemp -d)
+  printf '{"pid":%d,"cwd":"/home/user/project"}' "$$" >"$dir/s1.json"
+  local out
+  out=$(claude_live_cwds "$dir")
   rm -rf "$dir"
   assert_contains "$out" "/home/user/project" "prints cwd of live session"
 }
@@ -50,10 +55,12 @@ test_live_cwds_prints_live_session_cwd() {
 # A dead pid must be skipped (no output).
 test_live_cwds_skips_dead_pid() {
   . "$ADAPTER/adapter-claude.sh"
-  local dir; dir=$(mktemp -d)
+  local dir
+  dir=$(mktemp -d)
   # pid 2^31-1: guaranteed not running.
-  printf '{"pid":2147483647,"cwd":"/home/user/dead"}' > "$dir/s1.json"
-  local out; out=$(claude_live_cwds "$dir")
+  printf '{"pid":2147483647,"cwd":"/home/user/dead"}' >"$dir/s1.json"
+  local out
+  out=$(claude_live_cwds "$dir")
   rm -rf "$dir"
   assert_empty "$out" "dead pid produces no cwd"
 }
@@ -61,89 +68,135 @@ test_live_cwds_skips_dead_pid() {
 # claude_usage_rows: data only — no tmux style syntax may escape the module.
 test_usage_rows_are_plain_data() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
+  local tmp
+  tmp=$(mktemp -d)
   printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\n' \
-    > "$tmp/agent-shared-claude-test-session-@1"
-  local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+    >"$tmp/agent-shared-claude-test-session-@1"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
   rm -rf "$tmp"
   assert_contains "$out" "$(printf 'Session\t45.5\t⟳?:??')" "session row" &&
-  assert_contains "$out" "$(printf 'Weekly\t22.7\t⟳?@?:??')" "weekly row" &&
-  ! printf '%s' "$out" | grep -qF '#['
+    assert_contains "$out" "$(printf 'Weekly\t22.7\t⟳?@?:??')" "weekly row" &&
+    ! printf '%s' "$out" | grep -qF '#['
 }
 
 # A real five_reset renders the block clock and countdown into the suffix.
 test_usage_rows_render_block_countdown() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
+  local tmp
+  tmp=$(mktemp -d)
   local now=1700000000
-  printf 'session\t10\nweekly\t5\nfive_reset\t%d\nweek_reset\t9999999999\n' "$(( now + 1800 ))" \
-    > "$tmp/agent-shared-claude-test-session-@1"
-  local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude "$now" test-session @1)
+  printf 'session\t10\nweekly\t5\nfive_reset\t%d\nweek_reset\t9999999999\n' "$((now + 1800))" \
+    >"$tmp/agent-shared-claude-test-session-@1"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude "$now" test-session @1)
   rm -rf "$tmp"
   assert_contains "$out" "(in 30m)" "countdown under an hour is minutes"
+}
+
+# A real week_reset renders the weekly clock instead of the sentinel.
+test_usage_rows_render_week_reset_clock() {
+  . "$ADAPTER/adapter-claude.sh"
+  local tmp
+  tmp=$(mktemp -d)
+  printf 'session\t10\nweekly\t5\nfive_reset\t9999999999\nweek_reset\t1785726000\n' \
+    >"$tmp/agent-shared-claude-test-session-@1"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+  rm -rf "$tmp"
+  ! printf '%s' "$out" | grep -qF '⟳?@?:??'
+}
+
+# A cached "0" tokens value (not merely absent) still renders empty, not "Σ0".
+test_usage_rows_zero_tokens_shows_empty() {
+  . "$ADAPTER/adapter-claude.sh"
+  local tmp
+  tmp=$(mktemp -d)
+  printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\n' \
+    >"$tmp/agent-shared-claude-test-session-@1"
+  printf '0\n' >"$tmp/agent-tokens-session-claude"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+  rm -rf "$tmp"
+  ! printf '%s' "$out" | grep -qE 'Σ[0-9]'
+}
+
+# claude_effort_level falls back to "default" when CLAUDE_SETTINGS is missing.
+test_effort_level_defaults_without_settings() {
+  . "$ADAPTER/adapter-claude.sh"
+  [ "$(CLAUDE_SETTINGS=/nonexistent/settings.json claude_effort_level)" = "default" ]
 }
 
 # tokens is each row's OWN cached total — Session and Weekly differ, not one
 # figure copied onto both.
 test_usage_rows_show_distinct_tokens_per_row() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
+  local tmp
+  tmp=$(mktemp -d)
   printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\n' \
-    > "$tmp/agent-shared-claude-test-session-@1"
-  printf '6488061\n' > "$tmp/agent-tokens-session-claude"
-  printf '357025\n'  > "$tmp/agent-tokens-weekly-claude"
-  local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+    >"$tmp/agent-shared-claude-test-session-@1"
+  printf '6488061\n' >"$tmp/agent-tokens-session-claude"
+  printf '357025\n' >"$tmp/agent-tokens-weekly-claude"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
   rm -rf "$tmp"
   assert_contains "$out" "$(printf 'Session\t45.5\t⟳?:??\t-\tΣ6M')" "session shows its own total" &&
-  assert_contains "$out" "$(printf 'Weekly\t22.7\t⟳?@?:??\t-\tΣ357k')" "weekly shows its own, different total"
+    assert_contains "$out" "$(printf 'Weekly\t22.7\t⟳?@?:??\t-\tΣ357k')" "weekly shows its own, different total"
 }
 
 # Lifetime is a fourth, pct-less row: label carries the anchor date, no "N%".
 test_usage_rows_includes_lifetime_row() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
+  local tmp
+  tmp=$(mktemp -d)
   printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\n' \
-    > "$tmp/agent-shared-claude-test-session-@1"
-  printf '300.00\n'    > "$tmp/agent-cost-lifetime-claude"
-  printf '8200000000\n' > "$tmp/agent-tokens-lifetime-claude"
-  printf '2025-05-01\n' > "$tmp/agent-since-lifetime-claude"
-  local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+    >"$tmp/agent-shared-claude-test-session-@1"
+  printf '300.00\n' >"$tmp/agent-cost-lifetime-claude"
+  printf '8200000000\n' >"$tmp/agent-tokens-lifetime-claude"
+  printf '2025-05-01\n' >"$tmp/agent-since-lifetime-claude"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
   rm -rf "$tmp"
   assert_contains "$out" "$(printf '2025-05→\t-\t-\t300.00\tΣ8B')" "lifetime row carries the anchor date, total cost and tokens" &&
-  # Round-trip through the actual reader (agentbar-lib's paint_usage), not
-  # just the raw tab string: a "-" sentinel that read() still collapses
-  # would pass the line above and fail here.
-  ( STUB_ROWS=$out
-    . "$DIR/../../agentbar/agentbar-lib.sh"
-    stub_usage_rows() { printf '%s\n' "$STUB_ROWS"; }
-    rendered=$(paint_usage stub 0 0)
-    printf '%s' "$rendered" | grep -q '\$300.00' &&
-    printf '%s' "$rendered" | grep -q 'Σ8B' &&
-    ! printf '%s' "$rendered" | grep -qE "2025-05→:.*%"
-  )
+    # Round-trip through the actual reader (agentbar-lib's paint_usage), not
+    # just the raw tab string: a "-" sentinel that read() still collapses
+    # would pass the line above and fail here.
+    (
+      STUB_ROWS=$out
+      . "$DIR/../../agentbar/agentbar-lib.sh"
+      stub_usage_rows() { printf '%s\n' "$STUB_ROWS"; }
+      rendered=$(paint_usage stub 0 0)
+      printf '%s' "$rendered" | grep -q '\$300.00' &&
+        printf '%s' "$rendered" | grep -q 'Σ8B' &&
+        ! printf '%s' "$rendered" | grep -qE "2025-05→:.*%"
+    )
 }
 
 # No lifetime cache yet → no fourth row (rows function stays 2-row shaped),
 # and claude_usage_rows itself must still report success (return 0).
 test_usage_rows_omits_lifetime_row_without_cache() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
+  local tmp
+  tmp=$(mktemp -d)
   printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\n' \
-    > "$tmp/agent-shared-claude-test-session-@1"
-  local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+    >"$tmp/agent-shared-claude-test-session-@1"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
   local rc=$?
   rm -rf "$tmp"
   [ "$rc" -eq 0 ] &&
-  ! printf '%s' "$out" | grep -q "Since\|Lifetime"
+    ! printf '%s' "$out" | grep -q "Since\|Lifetime"
 }
 
 # No cached tokens yet → tokens field is empty, no crash, no "Σ0".
 test_usage_rows_tokens_empty_without_cache() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
+  local tmp
+  tmp=$(mktemp -d)
   printf 'session\t45.5\nweekly\t22.7\nfive_reset\t9999999999\nweek_reset\t9999999999\n' \
-    > "$tmp/agent-shared-claude-test-session-@1"
-  local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+    >"$tmp/agent-shared-claude-test-session-@1"
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
   rm -rf "$tmp"
   ! printf '%s' "$out" | grep -qE 'Σ[0-9]'
 }
@@ -151,8 +204,10 @@ test_usage_rows_tokens_empty_without_cache() {
 # Never reported → no rows, non-zero, so the bar omits the segment entirely.
 test_usage_rows_absent_returns_1() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
-  local out; out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
+  local tmp
+  tmp=$(mktemp -d)
+  local out
+  out=$(AGENT_TMP_DIR="$tmp" claude_usage_rows claude 0 test-session @1)
   local rc=$?
   rm -rf "$tmp"
   assert_empty "$out" && [ "$rc" -eq 1 ]
@@ -166,10 +221,12 @@ test_usage_rows_absent_returns_1() {
 # block.
 test_incoming_stale_accepts_lower_session_same_block() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
+  local tmp
+  tmp=$(mktemp -d)
   printf 'session\t100\nweekly\t37\nfive_reset\t1785726000\nweek_reset\t9999999999\n' \
-    > "$tmp/agent-rate-claude"
-  local incoming; incoming=$(printf 'session\t13\nweekly\t38\nfive_reset\t1785726000\nweek_reset\t9999999999\n')
+    >"$tmp/agent-rate-claude"
+  local incoming
+  incoming=$(printf 'session\t13\nweekly\t38\nfive_reset\t1785726000\nweek_reset\t9999999999\n')
   AGENT_TMP_DIR="$tmp" claude_incoming_stale claude "$incoming"
   local rc=$?
   rm -rf "$tmp"
@@ -183,10 +240,12 @@ test_incoming_stale_accepts_lower_session_same_block() {
 # fight over the same file every 5s tick, forever alternating the display.
 test_incoming_stale_rejects_small_drop_same_block() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
+  local tmp
+  tmp=$(mktemp -d)
   printf 'session\t15\nweekly\t37\nfive_reset\t1785726000\nweek_reset\t9999999999\n' \
-    > "$tmp/agent-rate-claude"
-  local incoming; incoming=$(printf 'session\t8\nweekly\t37\nfive_reset\t1785726000\nweek_reset\t9999999999\n')
+    >"$tmp/agent-rate-claude"
+  local incoming
+  incoming=$(printf 'session\t8\nweekly\t37\nfive_reset\t1785726000\nweek_reset\t9999999999\n')
   AGENT_TMP_DIR="$tmp" claude_incoming_stale claude "$incoming"
   local rc=$?
   rm -rf "$tmp"
@@ -201,13 +260,15 @@ test_incoming_stale_rejects_small_drop_same_block() {
 # that indirection).
 test_parse_shared_direct() {
   . "$ADAPTER/adapter-claude.sh"
-  local out; out=$(cat "$FIXTURES/claude-status-safe.json" | claude_parse_shared)
+  local out
+  out=$(cat "$FIXTURES/claude-status-safe.json" | claude_parse_shared)
   assert_contains "$out" "$(printf 'session\t30')" "session parsed directly"
 }
 
 test_parse_context_direct() {
   . "$ADAPTER/adapter-claude.sh"
-  local out; out=$(cat "$FIXTURES/claude-status-safe.json" | claude_parse_context)
+  local out
+  out=$(cat "$FIXTURES/claude-status-safe.json" | claude_parse_context)
   assert_contains "$out" "$(printf 'ctx\t25')" "context parsed directly"
 }
 
@@ -216,13 +277,15 @@ test_parse_context_direct() {
 # invocation and jq parse rather than stubbing the functions away.
 test_cost_weekly_parses_npm_ccusage() {
   . "$ADAPTER/adapter-claude.sh"
-  local out; out=$(PATH="$DIR/../fixtures:$PATH" claude_cost_weekly)
+  local out
+  out=$(PATH="$DIR/../fixtures:$PATH" claude_cost_weekly)
   assert_contains "$out" "$(printf '2\t1500')" "sums daily cost and tokens from ccusage json"
 }
 
 test_cost_session_parses_npm_ccusage() {
   . "$ADAPTER/adapter-claude.sh"
-  local out; out=$(PATH="$DIR/../fixtures:$PATH" claude_cost_session)
+  local out
+  out=$(PATH="$DIR/../fixtures:$PATH" claude_cost_session)
   assert_contains "$out" "$(printf '0.25\t200')" "reads the last block's cost and tokens"
 }
 
@@ -235,10 +298,12 @@ test_cost_lifetime_parses_npm_ccusage() {
 
 test_incoming_stale_rejects_older_block() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
+  local tmp
+  tmp=$(mktemp -d)
   printf 'session\t50\nweekly\t37\nfive_reset\t1785726000\nweek_reset\t9999999999\n' \
-    > "$tmp/agent-rate-claude"
-  local incoming; incoming=$(printf 'session\t90\nweekly\t37\nfive_reset\t1785700000\nweek_reset\t9999999999\n')
+    >"$tmp/agent-rate-claude"
+  local incoming
+  incoming=$(printf 'session\t90\nweekly\t37\nfive_reset\t1785700000\nweek_reset\t9999999999\n')
   AGENT_TMP_DIR="$tmp" claude_incoming_stale claude "$incoming"
   local rc=$?
   rm -rf "$tmp"
@@ -250,42 +315,44 @@ test_incoming_stale_rejects_older_block() {
 # out to ccusage.
 test_refresh_costs_caches_both_slots() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
-  claude_cost_weekly()   { printf '4.20\t357025\n'; }
-  claude_cost_session()  { printf '0.70\t6488061\n'; }
+  local tmp
+  tmp=$(mktemp -d)
+  claude_cost_weekly() { printf '4.20\t357025\n'; }
+  claude_cost_session() { printf '0.70\t6488061\n'; }
   claude_cost_lifetime() { printf '300.00\t8200000000\t2025-05-01\n'; }
   AGENT_TMP_DIR="$tmp" USAGE_REFRESH=0 claude_refresh_costs claude
   wait
   local weekly session weekly_tok session_tok lifetime lifetime_tok lifetime_since
-  read -r weekly         < "$tmp/agent-cost-weekly-claude"
-  read -r session        < "$tmp/agent-cost-session-claude"
-  read -r weekly_tok     < "$tmp/agent-tokens-weekly-claude"
-  read -r session_tok    < "$tmp/agent-tokens-session-claude"
-  read -r lifetime       < "$tmp/agent-cost-lifetime-claude"
-  read -r lifetime_tok   < "$tmp/agent-tokens-lifetime-claude"
-  read -r lifetime_since < "$tmp/agent-since-lifetime-claude"
+  read -r weekly <"$tmp/agent-cost-weekly-claude"
+  read -r session <"$tmp/agent-cost-session-claude"
+  read -r weekly_tok <"$tmp/agent-tokens-weekly-claude"
+  read -r session_tok <"$tmp/agent-tokens-session-claude"
+  read -r lifetime <"$tmp/agent-cost-lifetime-claude"
+  read -r lifetime_tok <"$tmp/agent-tokens-lifetime-claude"
+  read -r lifetime_since <"$tmp/agent-since-lifetime-claude"
   rm -rf "$tmp"
   assert_contains "$weekly" "4.20" "weekly cost cached" &&
-  assert_contains "$session" "0.70" "session cost cached" &&
-  assert_contains "$weekly_tok" "357025" "weekly tokens cached" &&
-  assert_contains "$session_tok" "6488061" "session tokens cached" &&
-  assert_contains "$lifetime" "300.00" "lifetime cost cached" &&
-  assert_contains "$lifetime_tok" "8200000000" "lifetime tokens cached" &&
-  assert_contains "$lifetime_since" "2025-05-01" "lifetime anchor date cached"
+    assert_contains "$session" "0.70" "session cost cached" &&
+    assert_contains "$weekly_tok" "357025" "weekly tokens cached" &&
+    assert_contains "$session_tok" "6488061" "session tokens cached" &&
+    assert_contains "$lifetime" "300.00" "lifetime cost cached" &&
+    assert_contains "$lifetime_tok" "8200000000" "lifetime tokens cached" &&
+    assert_contains "$lifetime_since" "2025-05-01" "lifetime anchor date cached"
 }
 
 # weekly/session's cost<TAB>tokens (no third field) must not write a spurious
 # "since" file — only lifetime's 3-field output does.
 test_refresh_costs_skips_since_for_two_field_slots() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
-  claude_cost_weekly()   { printf '4.20\t357025\n'; }
-  claude_cost_session()  { printf '0.70\t6488061\n'; }
+  local tmp
+  tmp=$(mktemp -d)
+  claude_cost_weekly() { printf '4.20\t357025\n'; }
+  claude_cost_session() { printf '0.70\t6488061\n'; }
   claude_cost_lifetime() { printf '300.00\t8200000000\t2025-05-01\n'; }
   AGENT_TMP_DIR="$tmp" USAGE_REFRESH=0 claude_refresh_costs claude
   wait
   local has_weekly_since=0 has_session_since=0
-  [ -f "$tmp/agent-since-weekly-claude" ]  && has_weekly_since=1
+  [ -f "$tmp/agent-since-weekly-claude" ] && has_weekly_since=1
   [ -f "$tmp/agent-since-session-claude" ] && has_session_since=1
   rm -rf "$tmp"
   [ "$has_weekly_since" -eq 0 ] && [ "$has_session_since" -eq 0 ]
@@ -294,20 +361,21 @@ test_refresh_costs_skips_since_for_two_field_slots() {
 # A cache fresher than USAGE_REFRESH is left alone — no command runs.
 test_refresh_costs_skips_fresh_cache() {
   . "$ADAPTER/adapter-claude.sh"
-  local tmp; tmp=$(mktemp -d)
-  echo "STALE" > "$tmp/agent-cost-weekly-claude"
-  echo "STALE" > "$tmp/agent-tokens-weekly-claude"
-  echo "STALE" > "$tmp/agent-cost-session-claude"
-  claude_cost_weekly()  { printf 'NEW\t1\n'; }
+  local tmp
+  tmp=$(mktemp -d)
+  echo "STALE" >"$tmp/agent-cost-weekly-claude"
+  echo "STALE" >"$tmp/agent-tokens-weekly-claude"
+  echo "STALE" >"$tmp/agent-cost-session-claude"
+  claude_cost_weekly() { printf 'NEW\t1\n'; }
   claude_cost_session() { printf 'NEW\t1\n'; }
   AGENT_TMP_DIR="$tmp" USAGE_REFRESH=1h claude_refresh_costs claude
   wait
   local weekly weekly_tok
-  read -r weekly     < "$tmp/agent-cost-weekly-claude"
-  read -r weekly_tok < "$tmp/agent-tokens-weekly-claude"
+  read -r weekly <"$tmp/agent-cost-weekly-claude"
+  read -r weekly_tok <"$tmp/agent-tokens-weekly-claude"
   rm -rf "$tmp"
   assert_contains "$weekly" "STALE" "fresh cost not refreshed" &&
-  assert_contains "$weekly_tok" "STALE" "fresh tokens not refreshed"
+    assert_contains "$weekly_tok" "STALE" "fresh tokens not refreshed"
 }
 
 run_tests \
@@ -322,6 +390,9 @@ run_tests \
   test_cost_lifetime_parses_npm_ccusage \
   test_usage_rows_are_plain_data \
   test_usage_rows_render_block_countdown \
+  test_usage_rows_render_week_reset_clock \
+  test_usage_rows_zero_tokens_shows_empty \
+  test_effort_level_defaults_without_settings \
   test_usage_rows_show_distinct_tokens_per_row \
   test_usage_rows_tokens_empty_without_cache \
   test_usage_rows_includes_lifetime_row \

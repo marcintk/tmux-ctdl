@@ -25,10 +25,14 @@ badge() { printf '#[fg=%s,blink]%s#[fg=default]' "$1" "$2"; }
 # the agent's ${AGENT^^}_ICON_* overrides, falling back to ○ ◌ ● ◉.
 badge_icons() {
   local pfx="${1^^}" v
-  v="${pfx}_ICON_RUNNING"; ICON_RUNNING="${!v:-○}"
-  v="${pfx}_ICON_IDLE";    ICON_IDLE="${!v:-◌}"
-  v="${pfx}_ICON_DONE";    ICON_DONE="${!v:-●}"
-  v="${pfx}_ICON_BLOCKED"; ICON_BLOCKED="${!v:-◉}"
+  v="${pfx}_ICON_RUNNING"
+  ICON_RUNNING="${!v:-○}"
+  v="${pfx}_ICON_IDLE"
+  ICON_IDLE="${!v:-◌}"
+  v="${pfx}_ICON_DONE"
+  ICON_DONE="${!v:-●}"
+  v="${pfx}_ICON_BLOCKED"
+  ICON_BLOCKED="${!v:-◉}"
 }
 
 # ── Decisions (pure) ─────────────────────────────────────────────────────────
@@ -39,11 +43,11 @@ badge_icons() {
 wintab_next_phase() {
   local phase=$1 event=$2 cleared=$3
   case "$event" in
-    RUNNING)    printf 'RUNNING 0' ;;
-    CLEAR)      printf 'IDLE 1' ;;
-    DONE)       if [ "$cleared" = 1 ]; then printf 'IDLE 0'; else printf 'DONE 0'; fi ;;
+    RUNNING) printf 'RUNNING 0' ;;
+    CLEAR) printf 'IDLE 1' ;;
+    DONE) if [ "$cleared" = 1 ]; then printf 'IDLE 0'; else printf 'DONE 0'; fi ;;
     PERMISSION) printf 'BLOCKED 0' ;;
-    *)          printf '%s %s' "${phase:-NONE}" "$cleared" ;;
+    *) printf '%s %s' "${phase:-NONE}" "$cleared" ;;
   esac
 }
 
@@ -58,7 +62,10 @@ wintab_next_poll() {
     if [ "$phase" = NONE ]; then printf 'IDLE'; else printf '%s' "$phase"; fi
     return 0
   fi
-  if [ "$recent" = 1 ]; then printf '%s' "$phase"; return 0; fi
+  if [ "$recent" = 1 ]; then
+    printf '%s' "$phase"
+    return 0
+  fi
   printf 'NONE'
 }
 
@@ -75,12 +82,13 @@ wintab_badge() {
   local ICON_RUNNING ICON_IDLE ICON_DONE ICON_BLOCKED
   badge_icons "$agent"
   local running="${BADGE_RUNNING:-#4488ff}" idle="${BADGE_IDLE:-#666666}"
-  local done_c="${BADGE_DONE:-#77dd77}"     blocked="${BADGE_BLOCKED:-#ff5555}"
+  local done_c="${BADGE_DONE:-#77dd77}" blocked="${BADGE_BLOCKED:-#ff5555}"
   case "$phase" in
-    RUNNING) if [ "$tick" -eq 0 ]; then printf ' %s' "$(badge "$running" "$ICON_RUNNING")"
-             else                       printf ' %s' "$(badge "$running" "$ICON_DONE")"; fi ;;
-    IDLE)    printf ' %s' "$(badge "$idle"    "$ICON_IDLE")" ;;
-    DONE)    printf ' %s' "$(badge "$done_c"  "$ICON_DONE")" ;;
+    RUNNING) if [ "$tick" -eq 0 ]; then
+      printf ' %s' "$(badge "$running" "$ICON_RUNNING")"
+    else printf ' %s' "$(badge "$running" "$ICON_DONE")"; fi ;;
+    IDLE) printf ' %s' "$(badge "$idle" "$ICON_IDLE")" ;;
+    DONE) printf ' %s' "$(badge "$done_c" "$ICON_DONE")" ;;
     BLOCKED) printf ' %s' "$(badge "$blocked" "$ICON_BLOCKED")" ;;
   esac
 }
@@ -103,7 +111,7 @@ wintab_live_windows() {
     if [ -n "$path" ] && printf '%s\n' "$live" | grep -qxF "$path"; then
       seen[$win]=1
     fi
-  done <<< "$panes"
+  done <<<"$panes"
   for win in "${!winset[@]}"; do
     printf '%s\t%s\n' "$win" "${seen[$win]:-0}"
   done | sort
@@ -135,7 +143,7 @@ wintab_apply() {
   local agent=$1 tsess=$2 win=$3 phase=$4 tick=${5:-0}
   if [ "$phase" = NONE ]; then
     state_clear phase "$agent" "$tsess" "$win"
-    state_clear live  "$agent" "$tsess" "$win"
+    state_clear live "$agent" "$tsess" "$win"
   else
     state_put "$phase" phase "$agent" "$tsess" "$win"
   fi
@@ -148,9 +156,10 @@ wintab_on_event() {
   local phase cleared
   phase=$(state_get phase "$agent" "$tsess" "$win")
   state_exists cleared "$agent" "$tsess" "$win" && cleared=1 || cleared=0
-  read -r phase cleared <<< "$(wintab_next_phase "${phase:-NONE}" "$event" "$cleared")"
-  if [ "$cleared" = 1 ]; then state_mark  cleared "$agent" "$tsess" "$win"
-  else                       state_clear cleared "$agent" "$tsess" "$win"; fi
+  read -r phase cleared <<<"$(wintab_next_phase "${phase:-NONE}" "$event" "$cleared")"
+  if [ "$cleared" = 1 ]; then
+    state_mark cleared "$agent" "$tsess" "$win"
+  else state_clear cleared "$agent" "$tsess" "$win"; fi
   wintab_apply "$agent" "$tsess" "$win" "$phase" 0
 }
 
@@ -163,7 +172,8 @@ wintab_on_tick() {
   wintab_liveness "$is_live" "$agent" "$tsess" "$win" "$now"
 
   local phase next
-  phase=$(state_get phase "$agent" "$tsess" "$win"); phase="${phase:-NONE}"
+  phase=$(state_get phase "$agent" "$tsess" "$win")
+  phase="${phase:-NONE}"
   next=$(wintab_next_poll "$phase" "$IS_LIVE" "$RECENTLY_LIVE")
 
   # Repaint every tick only while RUNNING (that's the pulse); otherwise touch tmux
@@ -188,10 +198,10 @@ wintab_hook() {
   local agent=$1 event=$2
   local here tsess win
   here=$(tmux_here) || return 0
-  IFS=$'\t' read -r tsess win <<< "$here"
+  IFS=$'\t' read -r tsess win <<<"$here"
 
   case "$event" in
-    RUNNING|CLEAR|DONE|PERMISSION) : ;;
+    RUNNING | CLEAR | DONE | PERMISSION) : ;;
     *) return 0 ;;
   esac
 
@@ -206,15 +216,16 @@ wintab_tick() {
 
   local now tick live panes win is_live
   now=$(date +%s)
-  tick=$(( now % 2 ))
+  tick=$((now % 2))
   live=$("${agent}_live_cwds" 2>/dev/null)
   panes=$(tmux_session_panes "$tsess")
 
   # wintab_live_windows does the per-window "any pane live?" judgment in one
   # pass; this loop just feeds each window's verdict to the state machine.
-  # One physical line (loop body included): kcov's bash line tracer doesn't
-  # credit a bare `done < <(...)` on its own line even though it runs.
-  while IFS=$'\t' read -r win is_live; do [ -n "$win" ] || continue; wintab_on_tick "$agent" "$tsess" "$win" "$is_live" "$tick" "$now"; done < <(wintab_live_windows "$panes" "$live")
+  while IFS=$'\t' read -r win is_live; do
+    [ -n "$win" ] || continue
+    wintab_on_tick "$agent" "$tsess" "$win" "$is_live" "$tick" "$now"
+  done < <(wintab_live_windows "$panes" "$live") # KCOV_TRACER_LOST
 }
 
 # wintab_status_tick <agent> <tsess> — the whole once-a-second status-format
