@@ -72,6 +72,7 @@ install, then left alone on every reinstall after):
 graph TD
   claude["Claude Code hooks<br/>+ statusLine"]:::src
   copilot["Copilot CLI<br/>session-store.db"]:::src
+  ccusage["ccusage<br/>npm exec, reads local transcript logs"]:::src
 
   subgraph ctdl["tmux + ctdl"]
     tick["agent-refresh<br/>status-interval 1s"]:::sched
@@ -85,15 +86,18 @@ graph TD
   end
 
   claude -- statusLine push, every 5s --> adapterClaude
-  tick -- pull, throttled --> adapterCopilot
+  tick -- pull, only if age > USAGE_REFRESH (1m) --> adapterCopilot
   copilot --> adapterCopilot
 
-  adapterClaude -- tokens, context %, cost history --> state
+  adapterClaude -- tokens, context % --> state
+  adapterClaude -. refresh_costs: fires per slot (session/weekly/lifetime), only if that slot's age > USAGE_REFRESH (1m), flock-guarded .-> ccusage
+  ccusage -- cost, tokens, since (per slot) --> state
   adapterCopilot -- model, tokens --> state
   claude -. phase: running/blocked/done .-> wintab
 
-  tick --> agentbar
-  tick --> wintab
+  tick -- liveness poll: pulse, clear stale badge, reap --> wintab
+  wintab -. live mark, per pane cwd .-> state
+  state -. age > WINTAB_LIVE_GRACE (5s) = stale .-> wintab
   state -- reads current snapshot --> agentbar
 
   classDef src fill:#1e3a5f,stroke:#5b9bd5,color:#fff

@@ -16,7 +16,11 @@ setup() { rm -f "$AGENT_TMP_DIR"/agent-*; }
 # ── badge rendering ──────────────────────────────────────────────────────────
 
 test_badge_renders_wrapper() {
-  [ "$(badge '#4488ff' '○')" = '#[fg=#4488ff,blink]○#[fg=default]' ]
+  [ "$(badge '#4488ff' '○')" = '#[fg=#4488ff]○#[fg=default]' ]
+}
+
+test_badge_renders_blink_when_asked() {
+  [ "$(badge '#4488ff' '○' 1)" = '#[fg=#4488ff,blink]○#[fg=default]' ]
 }
 
 test_badge_icons_defaults() {

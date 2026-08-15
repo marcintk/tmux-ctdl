@@ -16,10 +16,15 @@
 . "${TMUX_CTDL_HOME:-$HOME/.config/tmux/tmux-ctdl}/libs/boot-lib.sh"
 tmux_ctdl_boot state tmux
 
-# badge <color> <glyph> — render one window badge: a blinking coloured glyph
-# wrapped so it resets to default after. The single place that knows tmux badge
-# style syntax.
-badge() { printf '#[fg=%s,blink]%s#[fg=default]' "$1" "$2"; }
+# badge <color> <glyph> [blink] — render one window badge: a coloured glyph
+# wrapped so it resets to default after, blinking only when the caller says so
+# (RUNNING is the only phase meant to pulse). The single place that knows tmux
+# badge style syntax.
+badge() {
+  local attrs=$1
+  [ "$3" = 1 ] && attrs+=",blink"
+  printf '#[fg=%s]%s#[fg=default]' "$attrs" "$2"
+}
 
 # badge_icons <agent> — set ICON_RUNNING/IDLE/DONE/BLOCKED in caller scope from
 # the agent's ${AGENT^^}_ICON_* overrides, falling back to ○ ◌ ● ◉.
@@ -85,8 +90,8 @@ wintab_badge() {
   local done_c="${BADGE_DONE:-#77dd77}" blocked="${BADGE_BLOCKED:-#ff5555}"
   case "$phase" in
     RUNNING) if [ "$tick" -eq 0 ]; then
-      printf ' %s' "$(badge "$running" "$ICON_RUNNING")"
-    else printf ' %s' "$(badge "$running" "$ICON_DONE")"; fi ;;
+      printf ' %s' "$(badge "$running" "$ICON_RUNNING" 1)"
+    else printf ' %s' "$(badge "$running" "$ICON_DONE" 1)"; fi ;;
     IDLE) printf ' %s' "$(badge "$idle" "$ICON_IDLE")" ;;
     DONE) printf ' %s' "$(badge "$done_c" "$ICON_DONE")" ;;
     BLOCKED) printf ' %s' "$(badge "$blocked" "$ICON_BLOCKED")" ;;
